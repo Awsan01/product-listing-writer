@@ -15,12 +15,22 @@ const ANTHROPIC_VERSION = '2026-10-21';
 const LISTING_EFFORT = 'low';
 /** Total time for the Claude call, including the one retry. */
 const CLAUDE_TIMEOUT = 90;
+/**
+ * Thinking off for the default models, so the whole max_tokens budget goes to the listing
+ * (a long Arabic listing with every section is close to 1,500 tokens on its own).
+ * Each model has its own setting for this; other models keep adaptive thinking at low effort.
+ */
+const THINKING_OFF = [
+    'claude-sonnet-5-5' => ['type' => 'between_tools'],
+    'claude-haiku-5-5' => ['type' => 'disabled'],
+];
 
 /** One photo and one language. JSON comes back through structured outputs (output_config.format). */
 function anthropic_payload(array $cfg, array $o, array $img, string $visitor): array
 {
-    return [
-        'model' => $cfg['models'][$o['quality']],
+    $model = $cfg['models'][$o['quality']];
+    $payload = [
+        'model' => $model,
         'max_tokens' => $cfg['max_tokens'],
         'metadata' => ['user_id' => $visitor],
         'output_config' => [
@@ -38,6 +48,10 @@ function anthropic_payload(array $cfg, array $o, array $img, string $visitor): a
             ],
         ]],
     ];
+    if (isset(THINKING_OFF[$model])) {
+        $payload['thinking'] = THINKING_OFF[$model];
+    }
+    return $payload;
 }
 
 /** Sends the request. Retries once on 529 (overloaded) or another 5xx while enough time is left. */
@@ -143,11 +157,17 @@ function anthropic_outcome(array $res, array $o): array
             }
         }
         $data = json_decode(trim($text), true);
+        $cut = false;
+        if (!is_array($data) && $stop === 'max_tokens') {
+            // Cut off by max_tokens: keep the fields that were finished.
+            $data = json_salvage(trim($text));
+            $cut = is_array($data);
+        }
         $clean = is_array($data) ? sanitize_result($data, $o) : null;
         if ($clean === null) {
             return $fail(502, 'format', $stop === 'max_tokens' ? 'max_tokens' : 'bad_output');
         }
-        return array_merge($base, ['ok' => true, 'http' => 200, 'body' => $clean, 'log' => 'ok']);
+        return array_merge($base, ['ok' => true, 'http' => 200, 'body' => $clean, 'log' => $cut ? 'ok_cut' : 'ok']);
     }
 
     $type = is_array($b) ? (string)($b['error']['type'] ?? '') : '';

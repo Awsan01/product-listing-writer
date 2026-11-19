@@ -14,6 +14,7 @@
  *   mock:badjson          text that isn't JSON                    mock:slow        waits 3 seconds
  *   mock:fail-tr          529 for Turkish, normal for the others  mock:image       400 image error
  *   mock:slow-but-ar      Arabic answers at once, the others wait 3 seconds
+ *   mock:maxtokens        the reply is cut off in the caption (stop_reason max_tokens)
  */
 declare(strict_types=1);
 
@@ -51,6 +52,14 @@ foreach (['temperature', 'top_p', 'top_k', 'tool_choice', 'tools', 'prompt'] as 
     if (array_key_exists($banned, $req)) {
         api_error(400, 'invalid_request_error', "$banned: not expected in this app's requests");
     }
+}
+// Thinking settings the real API rejects for these models.
+$thinking = $req['thinking']['type'] ?? null;
+if ($req['model'] === 'claude-sonnet-5-5' && $thinking === 'disabled') {
+    api_error(400, 'invalid_request_error', 'To turn thinking off on this model, send "thinking": {"type": "between_tools"} instead of {"type": "disabled"}.');
+}
+if ($thinking === 'between_tools' && $req['model'] !== 'claude-sonnet-5-5') {
+    api_error(400, 'invalid_request_error', '"thinking.type.between_tools" is not supported for this model.');
 }
 $content = $req['messages'][0]['content'] ?? null;
 if (!is_string($req['model'] ?? null) || !is_int($req['max_tokens'] ?? null) || count($req['messages'] ?? []) !== 1
@@ -172,6 +181,11 @@ $text = json_encode(['seen' => $seen[$ui], 'listing' => $listing], JSON_UNESCAPE
 if (str_contains($prompt, 'mock:badjson')) {
     $text = 'Here is your listing: ' . substr((string)$text, 0, 40);
 }
+$stop = 'end_turn';
+if (str_contains($prompt, 'mock:maxtokens') && ($at = strpos((string)$text, '"caption":"')) !== false) {
+    $text = mb_strcut((string)$text, 0, $at + 24, 'UTF-8');
+    $stop = 'max_tokens';
+}
 
 reply(200, [
     'id' => 'msg_mock_' . bin2hex(random_bytes(6)),
@@ -182,7 +196,7 @@ reply(200, [
         ['type' => 'thinking', 'thinking' => '', 'signature' => 'mock-signature'],
         ['type' => 'text', 'text' => $text],
     ],
-    'stop_reason' => 'end_turn',
+    'stop_reason' => $stop,
     'stop_sequence' => null,
     'usage' => $usage,
 ]);

@@ -133,8 +133,13 @@ For an emergency stop, you can also disable the key in the Claude Console.
 
 Each request (one language of one product) adds a line to `private/listing-storage/usage-YYYY-MM.csv`:
 time, model, language, input and output tokens, and status. No photos, notes or IP addresses are written.
+Status `ok_cut` means a reply hit `max_tokens` and only its finished fields were kept; if you see it often, raise
+`max_tokens`. Lines for requests rejected before Claude was called stop once the month's file passes 5 MB, so junk
+traffic can't fill the disk; Claude calls are always logged.
+
 The default limits in the config are 30 requests per hour and 60 per day for each visitor IP, and 600 per day for the
-whole site (midnight UTC). A product in three languages counts as three requests.
+whole site (midnight UTC). A product in three languages counts as three requests. **Stop** cancels the wait in the
+browser, but a request that has already reached the server still finishes, and counts toward the limits and the bill.
 
 ## Local development
 
@@ -173,9 +178,10 @@ This starts the app and the mock with `php -S` and checks valid photos, rejected
 over 4000 px), unknown settings, wrong or missing Origin, retries, Claude errors, rate limits, the paused demo, missing
 config and the usage log, and runs `php -l` on every PHP file. When Node.js with Playwright is installed it also runs
 `tests/browser-test.js`, which uses the page in headless Chromium: uploads a photo, writes it in three languages,
-checks the 1568 px resize, edits a field, downloads the CSV, switches the interface language, tests Stop, a failed
-language with retry and every error message, and checks the phone layout. Use `--no-browser` to skip it, and
-`--shots docs/screenshots` to refresh the README screenshots.
+checks the 1568 px resize, edits a field, downloads the CSV, switches the interface language, tests Stop (including
+during Generate all and after a double-click), a failed language with retry and every error message, and checks the
+phone layout. Use `--no-browser` to skip it, `--shots docs/screenshots` to refresh the README screenshots, and
+`KEEP_WORK=1` to keep the test config, storage and server logs.
 
 ## Changing tones, fields and languages
 
@@ -201,10 +207,16 @@ The browser only says "best" or "fast"; the config maps them to models:
 | best | `claude-sonnet-5-5` |
 | fast | `claude-haiku-5-5` |
 
-Each request sends one photo (at most 1568 px on the long side) and a short prompt, asks for low thinking effort and
-allows up to 1,500 output tokens (`max_tokens`). Writing one product in three languages makes three requests, and the
-photo is sent with each. The JSON comes back through structured outputs (`output_config.format`) rather than a forced
-tool call, because `claude-sonnet-5-5` rejects a forced `tool_choice`.
+Each request sends one photo (at most 1568 px on the long side) and a short prompt and allows up to 1,500 output
+tokens (`max_tokens`). Writing one product in three languages makes three requests, and the photo is sent with each.
+The JSON comes back through structured outputs (`output_config.format`) rather than a forced tool call, because
+`claude-sonnet-5-5` rejects a forced `tool_choice`.
+
+Thinking tokens count toward `max_tokens`, and a long Arabic listing with every section is close to 1,500 tokens on
+its own, so the two default models run with thinking off (`between_tools` for `claude-sonnet-5-5`, `disabled` for
+`claude-haiku-5-5`, at low effort). Other models you put in the config keep adaptive thinking at low effort; the
+settings are in `THINKING_OFF` in [`api/lib/anthropic.php`](api/lib/anthropic.php). If a reply is still cut off, the
+fields that were finished are returned and the half-written one is dropped.
 
 Cost per request = input tokens (photo and prompt) × the model's input price + output tokens × its output price.
 Prices are on [Anthropic's pricing page](https://platform.claude.com/docs/en/about-claude/pricing), and how photos are
@@ -229,7 +241,8 @@ limit. If the credit runs out or a spend limit is hit, the page shows "The demo 
   secret salt (`ip_salt`, or one derived from the key) and never stored; an IPv6 /64 counts as one visitor. The same
   anonymous hash is sent to Anthropic as `metadata.user_id` to help detect abuse.
 - **Clean errors.** The browser gets only a short error code. Raw API errors, stack traces and file paths go to the
-  PHP error log, with Anthropic's request id for debugging. The Claude call times out after 90 seconds and is retried
+  PHP error log, with Anthropic's request id for debugging. Error display is switched off before any API code loads,
+  and in `.htaccess` for mod_php and LiteSpeed. The Claude call times out after 90 seconds and is retried
   once on overload (529) or another 5xx error.
 - **Web server rules.** `.htaccess` turns off folder listings and blocks dotfiles (including `.git`), `*.md`,
   `config*.php`, `api/lib/`, `tests/` and storage folders, with fallbacks for hosts without `mod_rewrite`. It also sends

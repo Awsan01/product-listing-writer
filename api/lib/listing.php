@@ -277,6 +277,65 @@ function clean_list($v, int $maxItems, int $maxLen, string $field): array
     return $out;
 }
 
+/**
+ * Recovers JSON that was cut off mid-way: goes back to the end of the last complete value and closes
+ * the objects and arrays still open, so a half-written field is dropped rather than shown.
+ */
+function json_salvage(string $text): ?array
+{
+    $stack = [];
+    $keyNext = [];
+    $inString = false;
+    $escaped = false;
+    $isKey = false;
+    $safeAt = -1;
+    $safeStack = [];
+    $len = strlen($text);
+    for ($i = 0; $i < $len; $i++) {
+        $c = $text[$i];
+        if ($inString) {
+            if ($escaped) {
+                $escaped = false;
+            } elseif ($c === '\\') {
+                $escaped = true;
+            } elseif ($c === '"') {
+                $inString = false;
+                if (!$isKey) {
+                    $safeAt = $i + 1;
+                    $safeStack = $stack;
+                }
+            }
+            continue;
+        }
+        $depth = count($stack) - 1;
+        if ($c === '"') {
+            $inString = true;
+            $isKey = $depth >= 0 && $stack[$depth] === '{' && $keyNext[$depth];
+        } elseif ($c === ':' && $depth >= 0) {
+            $keyNext[$depth] = false;
+        } elseif ($c === ',' && $depth >= 0 && $stack[$depth] === '{') {
+            $keyNext[$depth] = true;
+        } elseif ($c === '{' || $c === '[') {
+            $stack[] = $c;
+            $keyNext[] = $c === '{';
+        } elseif (($c === '}' || $c === ']') && $depth >= 0) {
+            array_pop($stack);
+            array_pop($keyNext);
+            $safeAt = $i + 1;
+            $safeStack = $stack;
+        }
+    }
+    if ($safeAt < 0) {
+        return null;
+    }
+    $json = substr($text, 0, $safeAt);
+    for ($j = count($safeStack) - 1; $j >= 0; $j--) {
+        $json .= $safeStack[$j] === '{' ? '}' : ']';
+    }
+    $data = json_decode($json, true);
+    return is_array($data) ? $data : null;
+}
+
 /** Removes control characters except line breaks and tabs. */
 function strip_controls(string $s): string
 {
