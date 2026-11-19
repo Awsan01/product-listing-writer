@@ -80,6 +80,41 @@ async function uploadAndGenerate(page, photo, notes) {
   return { plate: page.locator('#' + id), id };
 }
 
+// Clean screenshots for the README, taken in fresh pages after the checks.
+async function screenshots(browser, photo) {
+  fs.mkdirSync(SHOTS, { recursive: true });
+  const english = () => localStorage.setItem('listing-writer', JSON.stringify({ lang: 'en' }));
+
+  const desk = await browser.newContext({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2 });
+  await desk.addInitScript(english);
+  const page = await desk.newPage();
+  await page.goto(APP);
+  await page.waitForSelector('#dot.on');
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: path.join(SHOTS, 'desktop.png') });
+  const { plate, id } = await uploadAndGenerate(page, photo, 'Green ceramic mug');
+  await waitIdle(page, id);
+  await plate.locator('[data-tab="en"]').click();
+  await page.evaluate(() => { document.activeElement.blur(); document.getElementById('msg').textContent = ''; });
+  await plate.screenshot({ path: path.join(SHOTS, 'listing.png') });
+  await desk.close();
+
+  const phone = await browser.newContext({ ...devices['iPhone 13'] });
+  const mp = await phone.newPage();
+  await mp.goto(APP);
+  await mp.waitForSelector('#dot.on');
+  const r = await uploadAndGenerate(mp, photo, 'كوب قهوة أخضر');
+  await waitIdle(mp, r.id);
+  await mp.evaluate((pid) => {
+    document.activeElement.blur();
+    document.getElementById('msg').textContent = '';
+    const tabs = document.querySelector('#' + pid + ' .ltabs');
+    window.scrollTo(0, tabs.getBoundingClientRect().top + window.scrollY - 268);
+  }, r.id);
+  await mp.screenshot({ path: path.join(SHOTS, 'phone.png') });
+  await phone.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ proxy });
   try {
@@ -92,7 +127,7 @@ async function uploadAndGenerate(page, photo, notes) {
     }
 
     console.log('Desktop, Arabic interface');
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: SHOTS ? 2 : 1, acceptDownloads: true });
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
     await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(APP).origin });
     const page = await ctx.newPage();
     const errors = collectErrors(page);
@@ -139,26 +174,10 @@ async function uploadAndGenerate(page, photo, notes) {
     await page.click('#copyCsv');
     check((await page.evaluate(() => navigator.clipboard.readText())).includes('Edited green mug title'), 'Copy CSV still works');
 
-    if (SHOTS) {
-      fs.mkdirSync(SHOTS, { recursive: true });
-      await plate.locator('[data-tab="ar"]').click();
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await page.screenshot({ path: path.join(SHOTS, 'desktop-ar.png') });
-    }
-
     await page.click('#langBtn');
     check((await page.getAttribute('html', 'lang')) === 'en' && (await page.getAttribute('html', 'dir')) === 'ltr', 'interface switches to English, left to right');
     check((await page.textContent('h1')) === 'Product listing writer' && (await page.textContent('#aiTxt')) === 'Assistant ready', 'English texts are shown');
     check((await page.textContent('#dlCsv')) === 'Download CSV', 'buttons are translated');
-    if (SHOTS) {
-      await plate.locator('[data-tab="en"]').click();
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await page.screenshot({ path: path.join(SHOTS, 'desktop-en.png') });
-      await plate.scrollIntoViewIfNeeded();
-      await page.evaluate((pid) => document.getElementById(pid).scrollIntoView({ block: 'start' }), id);
-      await page.evaluate(() => window.scrollBy(0, -16));
-      await page.screenshot({ path: path.join(SHOTS, 'listing-en.png') });
-    }
     check(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
 
     console.log('Errors and recovery');
@@ -225,14 +244,13 @@ async function uploadAndGenerate(page, photo, notes) {
     await waitIdle(mp, r3.id);
     check((await r3.plate.locator('[data-tab]').count()) === 3, 'phone: listing written in three languages');
     check(await mp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'still no sideways scrolling with a listing');
-    if (SHOTS) {
-      await mp.evaluate((pid) => document.getElementById(pid).scrollIntoView({ block: 'start' }), r3.id);
-      await mp.screenshot({ path: path.join(SHOTS, 'phone-ar.png') });
-      await mp.evaluate(() => window.scrollTo(0, 0));
-      await mp.screenshot({ path: path.join(SHOTS, 'phone-top-ar.png') });
-    }
     check(errors3.length === 0, 'phone: no console errors' + (errors3.length ? ': ' + errors3.join(' | ') : ''));
     await phone.close();
+
+    if (SHOTS) {
+      await screenshots(browser, photo);
+      console.log('Screenshots saved to ' + SHOTS);
+    }
   } finally {
     await browser.close();
     fs.rmSync(TMP, { recursive: true, force: true });
