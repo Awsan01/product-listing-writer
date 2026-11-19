@@ -203,7 +203,7 @@ async function screenshots(browser, photo) {
     await page2.waitForTimeout(1300);
     const secs = await r2.plate.locator('.wait .secs').textContent();
     check(/^[1-9]\d* s$/.test(secs), 'seconds counter counts up while writing: ' + secs);
-    await r2.plate.locator('[data-stop]').click();
+    await r2.plate.locator('[data-stop]').click({ timeout: 5000 });
     await waitIdle(page2, r2.id, 5000);
     check((await r2.plate.locator('.idle').count()) === 1 && (await r2.plate.locator('[data-tab]').count()) === 0, 'Stop cancels the requests and the product goes back to idle');
 
@@ -262,10 +262,11 @@ async function screenshots(browser, photo) {
     await r6.plate.locator('[data-tab="en"]').click();
     await r6.plate.locator('textarea[data-k="title"]').fill('My edited English title');
     await r6.plate.locator('textarea.notes').fill('mug mock:slow-but-ar');
+    const rewriteAt = Date.now();
     await r6.plate.locator('[data-gen]').click();
     await r6.plate.locator('[data-tab="ar"]:not([data-st])').waitFor();
-    await page3.waitForTimeout(800);
-    await r6.plate.locator('[data-stop]').click();
+    await page3.waitForTimeout(Math.max(0, 800 - (Date.now() - rewriteAt))); // past the double-click guard
+    await r6.plate.locator('[data-stop]').click({ timeout: 5000 });
     await waitIdle(page3, r6.id, 5000);
     await r6.plate.locator('[data-tab="en"]').click();
     check((await r6.plate.locator('[data-tab]:not([data-st])').count()) === 3 && (await r6.plate.locator('textarea[data-k="title"]').inputValue()) === 'My edited English title',
@@ -289,7 +290,7 @@ async function screenshots(browser, photo) {
     await page3.click('#genAll');
     await g[0].locator('[data-stop]').waitFor();
     await page3.waitForTimeout(800);
-    await g[0].locator('[data-stop]').click();
+    await g[0].locator('[data-stop]').click({ timeout: 5000 });
     await page3.waitForFunction(() => !document.getElementById('genAll').disabled, null, { timeout: 10000 });
     check((await g[1].locator('.idle').count()) === 1 && (await page3.locator('[data-stop]').count()) === 0, 'Stop during "Generate all" ends the batch');
     // A photo dropped outside the drop area doesn't open in the tab.

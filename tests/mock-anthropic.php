@@ -13,7 +13,7 @@
  *   mock:credit           400 "credit balance is too low"         mock:refusal     stop_reason refusal
  *   mock:badjson          text that isn't JSON                    mock:slow        waits 3 seconds
  *   mock:fail-tr          529 for Turkish, normal for the others  mock:image       400 image error
- *   mock:slow-but-ar      Arabic answers at once, the others wait 3 seconds
+ *   mock:slow-but-ar      Arabic answers at once, the others wait 5 seconds
  *   mock:maxtokens        the reply is cut off in the caption (stop_reason max_tokens)
  */
 declare(strict_types=1);
@@ -123,7 +123,7 @@ if (str_contains($prompt, 'mock:image')) {
 }
 if (str_contains($prompt, 'mock:slow-but-ar')) {
     if ($lang !== 'ar') {
-        sleep(3);
+        sleep(5);
     }
 } elseif (str_contains($prompt, 'mock:slow')) {
     sleep(3);
