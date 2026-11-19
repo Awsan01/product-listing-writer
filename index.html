@@ -33,7 +33,9 @@
    COLOUR HELA green #34c87c to teal #00b090, dark teal-black #0d1c22, white cards on light grey #f4f6f5, a touch of orange #ff5e13
    TYPE Readex Pro throughout, a free stand-in for DIN Next Arabic
    LAYOUT dark header band, drop card overlapping its edge, settings, then product plates; phone: everything stacks, photo above its listing */
-:root{color-scheme:light dark;--bg:light-dark(#f4f6f5,#0b171c);--card:light-dark(#ffffff,#12232a);--field:light-dark(#f7faf9,#0f1e24);--line:light-dark(#e1e8e5,#24404a);--ink:light-dark(#0d1c22,#eef6f3);--mut:light-dark(#5b6a6f,#9fb5b0);--gink:light-dark(#0a7a55,#5fe3a6);--gtint:light-dark(#e3f6ec,#123a2e);--tabbg:light-dark(#0d1c22,#34c87c);--tabink:light-dark(#ffffff,#0d1c22);--oink:light-dark(#c2410c,#ff9a5c);--sh:0 1px 2px rgba(13,28,34,.06),0 8px 24px rgba(13,28,34,.06);--dark:#0d1c22;--g1:#30d080;--g2:#00b090;--green:#34c87c;--orange:#ff5e13}
+/* Plain light colours for browsers without light-dark() (Safari before 17.5, Chrome before 123) */
+:root{color-scheme:light;--bg:#f4f6f5;--card:#ffffff;--field:#f7faf9;--line:#e1e8e5;--ink:#0d1c22;--mut:#5b6a6f;--gink:#0a7a55;--gtint:#e3f6ec;--tabbg:#0d1c22;--tabink:#ffffff;--oink:#c2410c;--sh:0 1px 2px rgba(13,28,34,.06),0 8px 24px rgba(13,28,34,.06);--dark:#0d1c22;--g1:#30d080;--g2:#00b090;--green:#34c87c;--orange:#ff5e13}
+@supports (color:light-dark(#000,#fff)){:root{color-scheme:light dark;--bg:light-dark(#f4f6f5,#0b171c);--card:light-dark(#ffffff,#12232a);--field:light-dark(#f7faf9,#0f1e24);--line:light-dark(#e1e8e5,#24404a);--ink:light-dark(#0d1c22,#eef6f3);--mut:light-dark(#5b6a6f,#9fb5b0);--gink:light-dark(#0a7a55,#5fe3a6);--gtint:light-dark(#e3f6ec,#123a2e);--tabbg:light-dark(#0d1c22,#34c87c);--tabink:light-dark(#ffffff,#0d1c22);--oink:light-dark(#c2410c,#ff9a5c)}}
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
