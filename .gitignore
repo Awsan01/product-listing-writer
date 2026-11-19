@@ -1,0 +1,25 @@
+# Real config files (keep the API key out of git)
+config.local.php
+listing-config.php
+private/
+.env
+.env.*
+
+# Rate-limit counters and usage logs
+listing-storage/
+storage/
+
+# Test output
+tests/.tmp/
+
+# Dependencies
+node_modules/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
