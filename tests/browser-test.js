@@ -100,16 +100,18 @@ async function screenshots(browser, photo) {
   await desk.close();
 
   const phone = await browser.newContext({ ...devices['iPhone 13'] });
+  await phone.addInitScript(english);
   const mp = await phone.newPage();
   await mp.goto(APP);
   await mp.waitForSelector('#dot.on');
-  const r = await uploadAndGenerate(mp, photo, 'كوب قهوة أخضر');
+  const r = await uploadAndGenerate(mp, photo, 'Green ceramic mug');
   await waitIdle(mp, r.id);
+  await r.plate.locator('[data-tab="en"]').click();
   await mp.evaluate((pid) => {
     document.activeElement.blur();
     document.getElementById('msg').textContent = '';
     const tabs = document.querySelector('#' + pid + ' .ltabs');
-    window.scrollTo(0, tabs.getBoundingClientRect().top + window.scrollY - 268);
+    window.scrollTo(0, tabs.getBoundingClientRect().top + window.scrollY - 300);
   }, r.id);
   await mp.screenshot({ path: path.join(SHOTS, 'phone.png') });
   await phone.close();
