@@ -10,6 +10,9 @@ if (!defined('LISTING_APP')) {
     exit;
 }
 
+/** Lines for rejected requests stop once the month's log reaches this size; Claude calls are always logged. */
+const USAGE_LOG_SOFT_CAP = 5 * 1024 * 1024;
+
 /**
  * Counts one request against the visitor's hourly and daily limits (sliding windows)
  * and the site-wide daily limit (resets at midnight UTC).
@@ -26,6 +29,12 @@ function rate_take(string $dir, string $visitor, array $limits, ?int $now = null
     $perHour = (int)$limits['ip_per_hour'];
     $perDay = (int)$limits['ip_per_day'];
     $siteDay = (int)$limits['site_per_day'];
+
+    // When the site is full for today, answer before creating a file for this visitor.
+    $sitePath = $dir . '/rl-site-' . gmdate('Y-m-d', $now) . '.txt';
+    if ($siteDay > 0 && (int)@file_get_contents($sitePath) >= $siteDay) {
+        return max(1, 86400 - $now % 86400);
+    }
 
     // Lock order is always visitor file, then site file, so requests can't deadlock.
     $ipFile = @fopen($dir . '/rl-ip-' . $visitor . '.json', 'c+');
@@ -61,7 +70,7 @@ function rate_take(string $dir, string $visitor, array $limits, ?int $now = null
         }
 
         if ($siteDay > 0) {
-            $siteFile = @fopen($dir . '/rl-site-' . gmdate('Y-m-d', $now) . '.txt', 'c+');
+            $siteFile = @fopen($sitePath, 'c+');
             if ($siteFile === false) {
                 return -1;
             }
@@ -114,11 +123,15 @@ function storage_cleanup(string $dir, int $now): void
 
 /**
  * Appends one line to usage-YYYY-MM.csv: time, model, language, input and output tokens, status.
- * No photos, no notes and no IPs are ever written.
+ * No photos, no notes and no IPs are ever written. $optional lines (requests rejected before Claude
+ * was called) are skipped once the file passes USAGE_LOG_SOFT_CAP, so junk requests can't fill the disk.
  */
-function usage_log(string $dir, string $model, string $lang, int $in, int $out, string $status): void
+function usage_log(string $dir, string $model, string $lang, int $in, int $out, string $status, bool $optional = false): void
 {
     $file = $dir . '/usage-' . gmdate('Y-m') . '.csv';
+    if ($optional && (int)@filesize($file) > USAGE_LOG_SOFT_CAP) {
+        return;
+    }
     $h = @fopen($file, 'a');
     if ($h === false) {
         return;

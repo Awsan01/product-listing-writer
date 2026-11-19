@@ -37,6 +37,17 @@ AddDefaultCharset utf-8
   </IfModule>
 </FilesMatch>
 
+# Never show PHP errors to visitors (they would reveal file paths); they still go to the server log.
+<IfModule mod_php.c>
+  php_flag display_errors off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag display_errors off
+</IfModule>
+<IfModule LiteSpeed>
+  php_flag display_errors off
+</IfModule>
+
 # Security and caching headers
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"

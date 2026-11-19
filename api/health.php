@@ -5,6 +5,9 @@
  */
 declare(strict_types=1);
 
+if (function_exists('ini_set')) {
+    ini_set('display_errors', '0'); // before loading anything, so a broken deploy can't print file paths
+}
 define('LISTING_APP', true);
 require __DIR__ . '/lib/http.php';
 require __DIR__ . '/lib/config.php';

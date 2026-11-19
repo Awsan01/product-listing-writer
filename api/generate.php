@@ -9,6 +9,9 @@
  */
 declare(strict_types=1);
 
+if (function_exists('ini_set')) {
+    ini_set('display_errors', '0'); // before loading anything, so a broken deploy can't print file paths
+}
 define('LISTING_APP', true);
 require __DIR__ . '/lib/http.php';
 require __DIR__ . '/lib/config.php';
@@ -37,20 +40,20 @@ if ($store === null) {
 
 $langField = is_string($_POST['lang'] ?? null) && isset(LANG_NAMES[$_POST['lang']]) ? $_POST['lang'] : '';
 if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > MAX_IMAGE_BYTES + 256 * 1024) {
-    usage_log($store, '', $langField, 0, 0, 'too_large');
+    usage_log($store, '', $langField, 0, 0, 'too_large', true);
     send_json(413, ['error' => 'too_large']);
 }
 
 $o = read_options($_POST);
 if ($o === null) {
-    usage_log($store, '', $langField, 0, 0, 'bad_request');
+    usage_log($store, '', $langField, 0, 0, 'bad_request', true);
     send_json(400, ['error' => 'bad_request']);
 }
 $model = $cfg['models'][$o['quality']];
 
 $img = read_image($_FILES['image'] ?? null);
 if (isset($img['error'])) {
-    usage_log($store, $model, $o['lang'], 0, 0, $img['error']);
+    usage_log($store, $model, $o['lang'], 0, 0, $img['error'], true);
     send_json($img['status'], ['error' => $img['error']]);
 }
 
@@ -60,7 +63,7 @@ if ($wait < 0) {
     send_json(503, ['error' => 'paused']);
 }
 if ($wait > 0) {
-    usage_log($store, $model, $o['lang'], 0, 0, 'rate_limited');
+    usage_log($store, $model, $o['lang'], 0, 0, 'rate_limited', true);
     send_json(429, ['error' => 'rate_limited', 'retry_after' => $wait], ['Retry-After: ' . $wait]);
 }
 

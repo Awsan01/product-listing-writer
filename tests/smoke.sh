@@ -196,6 +196,13 @@ if [[ -f "$LOG" ]]; then
   MODE="$(stat -c '%a' "$WORK/storage" 2>/dev/null || stat -f '%Lp' "$WORK/storage")"
   [[ "$MODE" == "700" ]] && ok "storage folder is created with 0700" || bad "storage folder mode is $MODE"
   [[ -z "$(ls "$WORK/storage" | grep -v -E '^(rl-ip-[0-9a-f]{32}\.json|rl-site-[0-9-]+\.txt|usage-[0-9-]+\.csv)$')" ]] && ok "no photos are stored" || bad "unexpected files in storage: $(ls "$WORK/storage")"
+  printf '%*s\n' 5300000 '' | tr ' ' 'x' >> "$LOG"
+  SIZE1=$(wc -c < "$LOG")
+  post -F image=@"$WORK/notes.txt" "${FIELDS[@]}"
+  SIZE2=$(wc -c < "$LOG")
+  post -F image=@"$PHOTO" "${FIELDS[@]}"
+  SIZE3=$(wc -c < "$LOG")
+  [[ $SIZE1 -eq $SIZE2 && $SIZE3 -gt $SIZE2 ]] && ok "past 5 MB the log skips rejected requests but still records Claude calls" || bad "log cap: $SIZE1 $SIZE2 $SIZE3"
 else
   bad "usage log was not written"
 fi
@@ -219,6 +226,14 @@ jcheck '$d["retry_after"] > 3500 && $d["retry_after"] <= 3600' 'retry_after says
 write_config "'storage_dir' => '$WORK/storage-site', 'limits' => ['ip_per_hour' => 30, 'ip_per_day' => 60, 'site_per_day' => 1]"
 post -F image=@"$PHOTO" "${FIELDS[@]}"; expect 200 "site request 1 of 1 today"
 post -F image=@"$PHOTO" "${FIELDS[@]}"; expect 429 "whole-site daily limit" '"rate_limited"'
+BEFORE=$(ls "$WORK/storage-site" | grep -c '^rl-ip-')
+CODE=$(curl -s -o /dev/null -w '%{http_code}' --interface 127.0.0.3 -H "Origin: $APP" -F image=@"$PHOTO" "${FIELDS[@]}" "$APP/api/generate.php" 2>/dev/null)
+if [[ "$CODE" == "000" ]]; then
+  echo "  SKIP new visitor on a full site: this machine can't send from 127.0.0.3"
+else
+  AFTER=$(ls "$WORK/storage-site" | grep -c '^rl-ip-')
+  [[ "$CODE" == 429 && "$BEFORE" == "$AFTER" ]] && ok "a full site turns away new visitors without creating files for them" || bad "new visitor on a full site: $CODE, visitor files $BEFORE -> $AFTER"
+fi
 
 echo "Paused demo"
 write_config "'enabled' => false"
