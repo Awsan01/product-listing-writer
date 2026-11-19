@@ -64,7 +64,9 @@ if ($wait > 0) {
     send_json(429, ['error' => 'rate_limited', 'retry_after' => $wait], ['Retry-After: ' . $wait]);
 }
 
-@set_time_limit(CLAUDE_TIMEOUT + 60);
+if (function_exists('set_time_limit')) {
+    @set_time_limit(CLAUDE_TIMEOUT + 60); // some hosts disable it; cURL waits don't count on Linux anyway
+}
 $res = anthropic_send($cfg, anthropic_payload($cfg, $o, $img, $visitor));
 unset($img);
 $out = anthropic_outcome($res, $o);

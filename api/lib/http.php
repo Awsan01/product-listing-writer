@@ -12,8 +12,10 @@ if (!defined('LISTING_APP')) {
 /** Keeps PHP notices, stack traces and paths out of the response; errors go to the server log only. */
 function api_init(): void
 {
-    ini_set('display_errors', '0');
-    ini_set('log_errors', '1');
+    if (function_exists('ini_set')) { // a host can disable it; then its own php.ini settings apply
+        ini_set('display_errors', '0');
+        ini_set('log_errors', '1');
+    }
     error_reporting(E_ALL);
 
     set_exception_handler(static function (Throwable $e): void {
