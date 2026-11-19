@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product listing writer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+/* VOICE work tool, calm and exact, for people who sell online; dressed in HELA Tech's brand
+   IDEA a listing proof sheet: each product is a plate with its photo beside its finished listing
+   PICTURE the uploaded product photos beside their live listings; slanted green ribbons from the HELA mark in the header
+   COLOUR HELA green #34c87c to teal #00b090, dark teal-black #0d1c22, white cards on light grey #f4f6f5, a touch of orange #ff5e13
+   TYPE Readex Pro throughout, a free stand-in for DIN Next Arabic
+   LAYOUT dark header band, drop card overlapping its edge, settings, then product plates; phone: everything stacks, photo above its listing */
+:root{color-scheme:light dark;--bg:light-dark(#f4f6f5,#0b171c);--card:light-dark(#ffffff,#12232a);--field:light-dark(#f7faf9,#0f1e24);--line:light-dark(#e1e8e5,#24404a);--ink:light-dark(#0d1c22,#eef6f3);--mut:light-dark(#5b6a6f,#9fb5b0);--gink:light-dark(#0a7a55,#5fe3a6);--gtint:light-dark(#e3f6ec,#123a2e);--tabbg:light-dark(#0d1c22,#34c87c);--tabink:light-dark(#ffffff,#0d1c22);--oink:light-dark(#c2410c,#ff9a5c);--sh:0 1px 2px rgba(13,28,34,.06),0 8px 24px rgba(13,28,34,.06);--dark:#0d1c22;--g1:#30d080;--g2:#00b090;--green:#34c87c;--orange:#ff5e13}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;overflow-x:clip}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;transition:background-color .18s,border-color .18s,color .18s,transform .12s}
+button:active{transform:scale(.97)}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.band{padding-block:clamp(22px,3.5vw,44px);padding-left:max(5vw,16px);padding-right:max(5vw,16px)}
+.wrap{max-width:1180px;margin:0 auto;position:relative}
+.hero{position:relative;overflow:hidden;background:var(--dark);color:#fff;padding:clamp(28px,4vw,52px) max(5vw,16px) 92px}
+.motif{position:absolute;top:-30px;inset-inline-end:-40px;width:clamp(220px,32vw,420px);height:auto;opacity:.95;pointer-events:none}
+@media(max-width:600px){.motif{width:200px;opacity:.35}}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+h1{font-weight:400;font-size:clamp(32px,5vw,50px);line-height:1.1;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.lead{color:#b7cbc5;margin:12px 0 0;max-width:60ch}
+.hact{display:flex;align-items:center;gap:10px}
+.ai{display:flex;align-items:center;gap:8px;font-size:14px;color:#b7cbc5;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#ffc069;flex:none}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(52,200,124,.25)}
+.dot.off{background:var(--orange)}
+.ghost{height:44px;min-width:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:500}
+.ghost:hover{border-color:var(--green);color:var(--gink)}
+.hero .ghost{background:transparent;border-color:rgba(255,255,255,.28);color:#fff}
+.hero .ghost:hover{border-color:var(--green);color:var(--green)}
+.setup{padding-top:0}
+.drop{position:relative;margin-top:-62px;display:grid;place-items:center;text-align:center;gap:6px;padding:30px 20px;border:2px dashed var(--green);border-radius:22px;background:var(--card);box-shadow:var(--sh);transition:background-color .2s,border-color .2s}
+.drop:hover,.drop.over{background:var(--gtint)}
+.drop svg{width:46px;height:46px;color:var(--gink)}
+.drop b{font-size:clamp(18px,2.2vw,22px);font-weight:500}
+.drop span{font-size:14px;color:var(--mut)}
+.pick{font-style:normal;margin-top:8px;height:46px;line-height:46px;padding:0 24px;border-radius:999px;background:linear-gradient(135deg,var(--g1),var(--g2));color:var(--dark);font-weight:600}
+#file{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.drop:focus-within{outline:2px solid var(--green);outline-offset:3px}
+.busy{opacity:.6;pointer-events:none}
+.opts{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px 24px}
+.opt>span{display:block;font-size:13px;color:var(--mut);margin-bottom:8px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{height:40px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:500;white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--gtint);border-color:var(--green);color:var(--gink)}
+.seg button:hover{border-color:var(--green)}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px;margin-bottom:18px}
+.bar h2{font-size:21px;font-weight:500;margin:0;margin-inline-end:auto}
+.bar .msg{font-size:14px;flex-basis:100%}
+.prim{height:44px;padding:0 22px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--g1),var(--g2));color:var(--dark);font-weight:600}
+.prim:hover{filter:brightness(1.06)}
+.prim:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.plates{display:flex;flex-direction:column;gap:18px}
+.plate{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:24px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--sh)}
+@media(max-width:760px){.plate{grid-template-columns:minmax(0,1fr)}}
+.side{display:flex;flex-direction:column;gap:12px}
+.ph{position:relative;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.tag{position:absolute;top:10px;inset-inline-start:10px;background:var(--orange);color:var(--dark);font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.side label{font-size:13px;color:var(--mut)}
+.notes{width:100%;min-height:64px;resize:vertical;border-radius:12px;border:1px solid var(--line);background:var(--field);padding:10px 12px;font-size:16px;line-height:1.5}
+.notes:focus{border-color:var(--green);outline:none}
+.pb{display:flex;gap:8px;flex-wrap:wrap}
+.pb .prim{flex:1}
+.seen{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--mut)}
+.seen i{font-style:normal;background:var(--gtint);color:var(--gink);padding:2px 10px;border-radius:999px}
+.out{display:flex;flex-direction:column;gap:12px}
+.ltabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ltabs button{height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px}
+.ltabs button[aria-selected=true]{background:var(--tabbg);color:var(--tabink);border-color:var(--tabbg)}
+.ltabs .ghost{height:38px;margin-inline-start:auto;font-size:14px}
+.f{border-top:1px solid var(--line);padding-top:10px}
+.fh{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)}
+.fh b{font-weight:500;color:var(--gink);margin-inline-end:auto}
+.cnt{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cnt.over{color:var(--oink);font-weight:600}
+.cp{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:13px}
+.cp:hover{border-color:var(--green);color:var(--gink)}
+.f textarea{width:100%;border:0;background:transparent;resize:none;overflow:hidden;padding:6px 0 2px;font-size:16px;line-height:1.7;display:block}
+.f textarea:focus{outline:none;background:var(--field);border-radius:8px}
+.f.t textarea{font-size:20px;font-weight:500;line-height:1.4}
+.wait{display:flex;flex-direction:column;gap:12px;padding:8px 0}
+.wait p{margin:0;color:var(--mut);font-size:15px}
+.prog{height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--g1),var(--g2));border-radius:2px;animation:slide 1.4s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+[dir=rtl] .prog i{animation-name:slider}
+@keyframes slider{0%{transform:translateX(110%)}100%{transform:translateX(-260%)}}
+.err{color:var(--oink);font-size:14px}
+.idle{color:var(--mut);font-size:15px;margin:0;padding:8px 0}
+.empty{text-align:center;color:var(--mut);padding:30px 10px;border:1px dashed var(--line);border-radius:16px;background:var(--card)}
+.foot{color:var(--mut);font-size:13px;margin-top:18px}
+@media(prefers-reduced-motion:reduce){.prog i{animation:none}button{transition:none}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <svg class="motif" viewBox="0 0 420 300" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#30d080"/><stop offset="1" stop-color="#00b090"/></linearGradient></defs><g fill="url(#hg)" transform="rotate(-34 210 150)"><rect x="70" y="40" width="300" height="34" rx="17" opacity=".95"/><rect x="40" y="110" width="340" height="34" rx="17" opacity=".7"/></g></svg>
+  <div class="wrap hd">
+    <div>
+      <h1 id="h1">كاتب أوصاف المنتجات</h1>
+      <p class="lead" id="lead">ارفع صور منتجاتك واحصل على عنوان ووصف وكلمات مفتاحية ومنشور إنستغرام، بالعربية والإنجليزية والتركية.</p>
+    </div>
+    <div class="hact"><span class="ai"><i class="dot" id="dot"></i><span id="aiTxt">جارٍ الاتصال…</span></span><button type="button" class="ghost" id="langBtn">EN</button></div>
+  </div>
+</header>
+<section class="band setup"><div class="wrap">
+  <div class="drop" id="drop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
+    <b id="dropT">اسحب صور المنتجات هنا أو اخترها من جهازك</b>
+    <span id="dropS">حتى 10 صور · صورة واحدة لكل منتج · JPG أو PNG أو WebP</span>
+    <em class="pick" id="pickT">اختيار الصور</em>
+    <input type="file" id="file" accept="image/*" multiple aria-label="اختيار الصور">
+  </div>
+  <div class="opts" id="opts"></div>
+</div></section>
+<main class="band" style="padding-top:0"><div class="wrap">
+  <div class="bar">
+    <h2 id="listH">المنتجات</h2>
+    <button type="button" class="prim" id="genAll">توليد الكل</button>
+    <button type="button" class="ghost" id="copyCsv">نسخ CSV</button>
+    <button type="button" class="ghost" id="dlCsv" hidden>تنزيل CSV</button>
+    <button type="button" class="ghost" id="clearAll">مسح الكل</button>
+    <span class="msg" id="msg" aria-live="polite"></span>
+  </div>
+  <div class="plates" id="plates"></div>
+  <p class="foot" id="foot"></p>
+</div></main>
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LANGS=['ar','en','tr'];
+const KEYS=['title','short','description','features','keywords','meta','caption','hashtags'];
+const LIMIT={title:70,meta:155};
+const T={
+ar:{h1:'كاتب أوصاف المنتجات',lead:'ارفع صور منتجاتك واحصل على عنوان ووصف وكلمات مفتاحية ومنشور إنستغرام، بالعربية والإنجليزية والتركية.',
+dropT:'اسحب صور المنتجات هنا أو اخترها من جهازك',dropS:'حتى 10 صور · صورة واحدة لكل منتج · JPG أو PNG أو WebP',pick:'اختيار الصور',preparing:'جارٍ تجهيز الصور…',notImage:'تم تجاهل ملف ليس صورة.',
+aiOn:'المساعد جاهز',aiWait:'جارٍ الاتصال…',aiOff:'افتح الصفحة داخل Claude لتشغيل التوليد',aiNoImg:'هذا العرض لا يدعم قراءة الصور',
+langs:'لغات الوصف',tone:'الأسلوب',length:'الطول',include:'المحتوى',quality:'الجودة',
+tones:{lux:'فاخر',friendly:'ودود',pro:'احترافي',bold:'حماسي'},lengths:{short:'قصير',medium:'متوسط',long:'طويل'},
+inc:{features:'المميزات',seo:'كلمات SEO ووصف ميتا',social:'منشور إنستغرام'},q:{best:'أفضل جودة',fast:'أسرع'},
+list:n=>'المنتجات ('+n+')',genAll:'توليد الكل',genAllRun:(a,b)=>'جارٍ التوليد '+a+' من '+b,copyCsv:'نسخ CSV',dlCsv:'تنزيل CSV',clear:'مسح الكل',
+notesL:'تفاصيل إضافية (اختياري)',notesPh:'مثلاً: الاسم، الحجم، الخامة، السعر',gen:'توليد الوصف',regen:'إعادة التوليد',stop:'إيقاف',del:'حذف',
+example:'مثال',seen:'ما يراه المساعد:',empty:'لا توجد منتجات بعد. ارفع صورة منتج للبدء.',idle:'اضغط «توليد الوصف» ليكتب المساعد الوصف من الصورة.',
+analyzing:'يحلل الصورة ويكتب الوصف…',secs:s=>s+' ث',
+fields:{title:'العنوان',short:'وصف قصير',description:'الوصف الكامل',features:'المميزات',keywords:'كلمات مفتاحية (SEO)',meta:'وصف ميتا',caption:'منشور إنستغرام',hashtags:'هاشتاقات'},
+copy:'نسخ',copied:'تم النسخ',copyAll:'نسخ الكل',copyFail:'تعذّر النسخ. حدّد النص وانسخه يدوياً.',csvCopied:'تم نسخ الجدول بصيغة CSV. الصقه في Excel أو Google Sheets.',saved:'تم حفظ الملف.',noData:'لا توجد أوصاف بعد.',
+err:{not_granted:'يحتاج التوليد إذنك لاستخدام Claude. أعد تحميل الصفحة واختر «السماح».',rate_limited:'طلبات كثيرة خلال وقت قصير. انتظر دقيقة ثم أعد المحاولة.',session_expired:'انتهت الجلسة. سجّل الدخول إلى Claude مرة أخرى.',refused:'تعذّر وصف هذه الصورة. جرّب صورة أخرى.',image_rejected:'تعذّر قراءة الصورة. استخدم JPG أو PNG أو WebP بحجم أصغر.',images_unavailable:'هذا العرض لا يدعم إرسال الصور.',format:'لم يصل الرد بالشكل المتوقع. أعد المحاولة.',off:'التوليد غير متاح في هذا العرض.',other:'حدث خطأ في الاتصال. أعد المحاولة.',example:'لإعادة توليد المثال، ارفع صورة حقيقية لمنتج.',big:'الصورة أكبر من الحجم المسموح.',type:'تعذّر فتح هذه الصورة على هذا الجهاز. جرّب صورة بصيغة JPG أو PNG.'},
+tooMany:'يمكن رفع 10 صور كحد أقصى.',lname:{ar:'العربية',en:'English',tr:'Türkçe'},
+foot:'المنتج الأول مثال مكتوب مسبقاً لعرض النتيجة. يعمل التوليد على Claude من حسابك، وتقدر تعدّل أي نص قبل نسخه.',langBtn:'EN',langAria:'English'},
+en:{h1:'Product listing writer',lead:'Upload product photos and get a title, description, SEO keywords and an Instagram post in Arabic, English and Turkish.',
+dropT:'Drop product photos here or choose them from your device',dropS:'Up to 10 photos · one photo per product · JPG, PNG or WebP',pick:'Choose photos',preparing:'Preparing photos…',notImage:'A file that isn’t a photo was skipped.',
+aiOn:'Assistant ready',aiWait:'Connecting…',aiOff:'Open this page in Claude to generate',aiNoImg:'This view can’t read images',
+langs:'Listing languages',tone:'Tone',length:'Length',include:'Content',quality:'Quality',
+tones:{lux:'Luxury',friendly:'Friendly',pro:'Professional',bold:'Bold'},lengths:{short:'Short',medium:'Medium',long:'Long'},
+inc:{features:'Features',seo:'SEO keywords and meta',social:'Instagram post'},q:{best:'Best quality',fast:'Faster'},
+list:n=>'Products ('+n+')',genAll:'Generate all',genAllRun:(a,b)=>'Generating '+a+' of '+b,copyCsv:'Copy CSV',dlCsv:'Download CSV',clear:'Clear all',
+notesL:'Extra details (optional)',notesPh:'For example: name, size, material, price',gen:'Write listing',regen:'Rewrite',stop:'Stop',del:'Remove',
+example:'Example',seen:'What the assistant sees:',empty:'No products yet. Upload a product photo to start.',idle:'Press “Write listing” and the assistant writes it from the photo.',
+analyzing:'Reading the photo and writing the listing…',secs:s=>s+' s',
+fields:{title:'Title',short:'Short description',description:'Full description',features:'Features',keywords:'SEO keywords',meta:'Meta description',caption:'Instagram caption',hashtags:'Hashtags'},
+copy:'Copy',copied:'Copied',copyAll:'Copy all',copyFail:'Couldn’t copy. Select the text and copy it yourself.',csvCopied:'CSV copied. Paste it into Excel or Google Sheets.',saved:'File saved.',noData:'No listings yet.',
+err:{not_granted:'Generating needs your permission to use Claude. Reload the page and choose Allow.',rate_limited:'Too many requests in a short time. Wait a minute and try again.',session_expired:'Your session ended. Sign in to Claude again.',refused:'Couldn’t describe this photo. Try another one.',image_rejected:'Couldn’t read the photo. Use a smaller JPG, PNG or WebP.',images_unavailable:'This view can’t send images.',format:'The reply came back in an unexpected format. Try again.',off:'Generating isn’t available in this view.',other:'Connection problem. Try again.',example:'To rewrite the example, upload a real product photo.',big:'The photo is larger than allowed.',type:'This photo couldn’t be opened on this device. Try a JPG or PNG.'},
+tooMany:'You can upload up to 10 photos.',lname:{ar:'العربية',en:'English',tr:'Türkçe'},
+foot:'The first product is a pre-written example that shows the result. Generating runs on Claude with your account, and you can edit any text before copying it.',langBtn:'ع',langAria:'العربية'}
+};
+const S={lang:'ar',langs:{ar:true,en:true,tr:true},tone:'lux',len:'medium',inc:{features:true,seo:true,social:true},q:'best'};
+try{const v=JSON.parse(localStorage.getItem('listing-writer')||'{}');Object.assign(S,v);S.langs=Object.assign({ar:true,en:true,tr:true},v.langs||{});S.inc=Object.assign({features:true,seo:true,social:true},v.inc||{})}catch(e){}
+const save=()=>{try{localStorage.setItem('listing-writer',JSON.stringify(S))}catch(e){}};
+const t=k=>T[S.lang][k];
+
+const EX_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f9c4d2"/><stop offset="1" stop-color="#d4567a"/></linearGradient></defs><rect width="600" height="600" fill="#f3e6ea"/><ellipse cx="300" cy="522" rx="160" ry="18" fill="#000" opacity=".12"/><rect x="255" y="88" width="90" height="82" rx="14" fill="#c9a24a"/><rect x="268" y="96" width="16" height="66" rx="8" fill="#f3dc9a" opacity=".8"/><rect x="272" y="170" width="56" height="34" fill="#a8822f"/><path d="M150 290q0-86 86-86h128q86 0 86 86v150q0 72-72 72H222q-72 0-72-72z" fill="url(#g)" stroke="#fff" stroke-opacity=".6" stroke-width="5"/><rect x="178" y="300" width="22" height="160" rx="11" fill="#fff" opacity=".35"/><rect x="215" y="330" width="170" height="88" rx="10" fill="#fff" opacity=".93"/><text x="300" y="370" text-anchor="middle" font-family="Georgia,serif" font-size="26" fill="#5a1430">TAIF ROSE</text><text x="300" y="400" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#8a5a6a">EAU DE PARFUM · 100 ML</text></svg>';
+const EX_URL='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(EX_SVG);
+const example=()=>({id:'ex',example:true,url:EX_URL,file:null,notes:'عطر نسائي 100 مل، ورد طائفي ومسك',status:'done',tab:'ar',
+ seen:{product:{ar:'عطر نسائي',en:'Women’s perfume'},items:{ar:['زجاجة عطر وردية','غطاء ذهبي','ملصق أبيض','100 مل'],en:['Pink perfume bottle','Gold cap','White label','100 ml']}},
+ out:{
+ ar:{title:'عطر ورد الطائف الملكي للنساء – 100 مل',short:'عطر زهري فاخر يجمع ورد الطائف مع لمسة مسك ناعمة، في زجاجة وردية أنيقة.',
+  description:'اكتشفي أناقة ورد الطائف في عطر نسائي يفتتح بنفحات زهرية منعشة، ثم يستقر على لمسة دافئة من المسك.\n\nصُمّم للمرأة التي تحب الحضور الهادئ والراقي، ويناسب السهرات والمناسبات والهدايا. يأتي بحجم 100 مل في زجاجة وردية بغطاء ذهبي تضيف لمسة جمال إلى طاولة زينتك.',
+  features:['مكونات العطر: ورد طائفي ومسك','الحجم: 100 مل','زجاجة وردية بغطاء ذهبي','هدية مناسبة للمناسبات'],
+  keywords:['عطر ورد','عطر ورد طائفي','عطر نسائي','عطر مسك','عطر هدية','عطور فاخرة','عطر 100 مل','عطر للمناسبات'],
+  meta:'عطر ورد الطائف النسائي بلمسة مسك ناعمة، 100 مل في زجاجة وردية أنيقة. هدية مثالية للمناسبات.',
+  caption:'ورد الطائف بلمسة مسك… حضور ناعم يلفت الانتباه 🌹\nاطلبيه الآن هدية لنفسك أو لمن تحبين.',hashtags:['#عطر_ورد','#عطور_نسائية','#ورد_الطائف','#هدايا','#عطور']},
+ en:{title:'Royal Taif Rose Perfume for Women – 100 ml',short:'A refined floral perfume pairing Taif rose with a soft touch of musk, in an elegant pink bottle.',
+  description:'Discover the elegance of Taif rose in a women’s perfume that opens with fresh floral notes and settles into a warm touch of musk.\n\nMade for women who love a quiet, graceful presence, it suits evenings, special occasions and gifting. It comes in a 100 ml pink glass bottle with a gold cap that adds beauty to any dressing table.',
+  features:['Notes: Taif rose and musk','Size: 100 ml','Pink glass bottle with a gold cap','A thoughtful gift for special occasions'],
+  keywords:['rose perfume','Taif rose perfume','women’s perfume','musk perfume','perfume gift','luxury perfume','100 ml perfume','floral perfume'],
+  meta:'Royal Taif Rose women’s perfume with a soft musk touch. 100 ml in an elegant pink bottle, a perfect gift for any occasion.',
+  caption:'Taif rose meets soft musk, a quiet kind of glamour 🌹\nOrder yours today, for yourself or someone you love.',hashtags:['#roseperfume','#womensperfume','#taifrose','#perfumegift','#fragrance']},
+ tr:{title:'Kraliyet Taif Gülü Kadın Parfümü – 100 ml',short:'Taif gülünü yumuşak bir misk dokunuşuyla buluşturan, zarif pembe şişede çiçeksi bir parfüm.',
+  description:'Taif gülünün zarafetini keşfedin: ferah çiçeksi notalarla açılan ve sıcak bir misk dokunuşuyla tamamlanan bir kadın parfümü.\n\nSakin ve zarif bir etki bırakmayı sevenler için tasarlandı; akşam davetleri, özel günler ve hediye için idealdir. Altın kapaklı 100 ml pembe cam şişesiyle makyaj masanıza şıklık katar.',
+  features:['Notalar: Taif gülü ve misk','Hacim: 100 ml','Altın kapaklı pembe cam şişe','Özel günler için şık bir hediye'],
+  keywords:['gül parfümü','Taif gülü parfüm','kadın parfümü','misk parfüm','hediye parfüm','lüks parfüm','100 ml parfüm','çiçeksi parfüm'],
+  meta:'Yumuşak misk dokunuşlu Kraliyet Taif Gülü kadın parfümü. Zarif pembe şişede 100 ml, her özel gün için ideal bir hediye.',
+  caption:'Taif gülü ve yumuşak misk… sessiz ama etkileyici bir zarafet 🌹\nKendinize ya da sevdiklerinize hemen sipariş verin.',hashtags:['#gülparfümü','#kadınparfümü','#taifgülü','#hediye','#parfüm']}
+ }});
+
+let products=[example()],seq=0,sample=null,imgLimits=null,downloads=null,aiState='wait',batch=null;
+const ready=(async()=>{
+  try{sample=window.claude&&typeof window.claude.use==='function'?await window.claude.use('sample'):null}catch(e){sample=null}
+  if(sample){try{const l=await sample.limits();imgLimits=l&&l.images?l.images:null}catch(e){imgLimits=null}aiState=imgLimits?'on':'noimg'}else aiState='off';
+  try{downloads=window.claude&&typeof window.claude.use==='function'?await window.claude.use('downloads'):null}catch(e){downloads=null}
+  renderStatus();$('#dlCsv').hidden=!downloads;
+})();
+
+function selLangs(){return LANGS.filter(l=>S.langs[l])}
+function joinList(arr,l){return (arr||[]).join(l==='ar'?'، ':', ')}
+function splitList(s){return String(s||'').split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean)}
+function fieldText(o,k,l){const v=o[k];if(v==null)return '';if(k==='features')return v.map(x=>'• '+x).join('\n');if(k==='keywords')return joinList(v,l);if(k==='hashtags')return v.join(' ');return v}
+function setField(o,k,txt){if(k==='features')o[k]=String(txt).split('\n').map(x=>x.replace(/^[•\-\*]\s*/,'').trim()).filter(Boolean);else if(k==='keywords')o[k]=splitList(txt);else if(k==='hashtags')o[k]=String(txt).split(/\s+/).filter(Boolean);else o[k]=txt}
+
+function promptFor(p){
+  const L=selLangs(),names={ar:'Arabic',en:'English',tr:'Turkish'},ui=S.lang==='ar'?'Arabic':'English';
+  const tone={lux:'elegant and premium',friendly:'warm and friendly',pro:'clear and professional',bold:'energetic and persuasive'}[S.tone];
+  const words={short:'40 to 60',medium:'80 to 120',long:'150 to 200'}[S.len];
+  const f=['"title":"..."','"short":"..."','"description":"..."'];
+  if(S.inc.features)f.push('"features":["..."]');
+  if(S.inc.seo)f.push('"keywords":["..."]','"meta":"..."');
+  if(S.inc.social)f.push('"caption":"..."','"hashtags":["#..."]');
+  return `You write e-commerce product listings from a product photo.
+The attached photo shows the product. Seller's notes: ${p.notes.trim()?'«'+p.notes.trim().slice(0,600)+'»':'none'}.
+Write the listing in: ${L.map(l=>names[l]).join(', ')}. Tone: ${tone}.
+
+Rules
+- Describe only what you can see in the photo or read in the notes. Never invent sizes, materials, ingredients, certifications, prices, brand names or performance claims such as how long something lasts. Leave out anything you are unsure about.
+- Write each language natively, not as a word-for-word translation, with correct grammar and natural word order. Arabic: Modern Standard Arabic that Gulf shoppers find natural. Turkish: natural Turkish e-commerce style.
+- title: up to 70 characters, with the product type and its main feature.
+- short: one sentence.
+- description: ${words} words in two short paragraphs separated by \\n\\n.
+${S.inc.features?'- features: 3 to 5 short points.\n':''}${S.inc.seo?'- keywords: 8 to 12 search phrases shoppers would type in that language, most important first.\n- meta: up to 155 characters, for search results.\n':''}${S.inc.social?'- caption: an Instagram caption of 1 to 3 short lines with at most one emoji.\n- hashtags: 5 to 8 hashtags in that language.\n':''}
+Output: one JSON object per line and nothing else. Never put a line break inside an object; write line breaks inside text as \\n.
+Line 1: {"type":"seen","product":"<what the product is, in ${ui}>","items":["<3 to 6 short things you can see, in ${ui}>"]}
+Then one line per language, in this order: ${L.join(', ')}. Each line:
+{"type":"listing","lang":"<${L.join('|')}>",${f.join(',')}}`;
+}
+function parseLine(line){
+  let s=String(line||'').trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+  if(!s)return null;
+  if(s[0]!=='{'){const i=s.indexOf('{');if(i<0)return null;s=s.slice(i)}
+  try{return JSON.parse(s)}catch(e){const j=s.lastIndexOf('}');if(j>0){try{return JSON.parse(s.slice(0,j+1))}catch(e2){}}return null}
+}
+const str=v=>typeof v==='string'?v.trim():'';
+const arr=v=>Array.isArray(v)?v.map(x=>String(x).trim()).filter(Boolean):(typeof v==='string'?splitList(v):[]);
+function take(p,obj){
+  if(!obj||typeof obj!=='object')return false;
+  if(obj.type==='seen'){const ui=S.lang;p.seen={product:{[ui]:str(obj.product)},items:{[ui]:arr(obj.items).slice(0,6)}};return true}
+  if(obj.type==='listing'&&LANGS.includes(obj.lang)){
+    const o={};
+    for(const k of KEYS){if(obj[k]==null)continue;o[k]=['features','keywords','hashtags'].includes(k)?arr(obj[k]):str(obj[k]).replace(/\\n/g,'\n')}
+    if(o.hashtags)o.hashtags=o.hashtags.map(h=>h[0]==='#'?h:'#'+h.replace(/\s+/g,'_'));
+    p.out[obj.lang]=o;if(!p.out[p.tab])p.tab=obj.lang;return true;
+  }
+  return false;
+}
+function rasterize(){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{try{const c=document.createElement('canvas');c.width=600;c.height=600;c.getContext('2d').drawImage(img,0,0,600,600);c.toBlob(b=>b?res(b):rej(new Error('png')),'image/png')}catch(e){rej(e)}};img.onerror=()=>rej(new Error('img'));img.src=EX_URL})}
+
+async function generate(p){
+  if(p.status==='run')return;
+  await ready;
+  if(!sample){p.status='err';p.err='off';renderPlate(p);return}
+  if(!imgLimits){p.status='err';p.err='images_unavailable';renderPlate(p);return}
+  if(!selLangs().length){S.langs.ar=true;save();renderOpts()}
+  if(!p.file&&p.example){try{p.file=await rasterize()}catch(e){p.status='err';p.err='example';renderPlate(p);return}}
+  p.status='run';p.err='';p.ctl=new AbortController();p.t0=Date.now();p._n=0;
+  const keepOut=p.out;p.out={};p.seen=null;renderPlate(p);
+  p.timer=setInterval(()=>{const el=document.querySelector('#'+p.id+' .secs');if(el)el.textContent=t('secs')(Math.round((Date.now()-p.t0)/1000))},1000);
+  let text='';
+  const eat=final=>{const lines=text.split('\n');const upto=final?lines.length:lines.length-1;let changed=false;for(let i=p._n;i<upto;i++){if(take(p,parseLine(lines[i])))changed=true}p._n=Math.max(p._n,upto);if(changed)renderPlate(p)};
+  try{
+    const r=await sample(promptFor(p),{images:[p.file],signal:p.ctl.signal,cache:false,modelTier:S.q==='fast'?'quick':'default',onText:({text:x})=>{text=x;eat(false)}});
+    text=r.text;eat(true);
+    if(!Object.keys(p.out).length){
+      const objs=(text.match(/\{[^\n]*\}/g)||[]).map(parseLine);objs.forEach(o=>take(p,o));
+    }
+    if(Object.keys(p.out).length){p.status='done'}else{p.status='err';p.err='format';p.out=keepOut}
+  }catch(e){
+    const c=e&&e.code;
+    if(c==='cancelled'){p.status=Object.keys(p.out).length?'done':(Object.keys(keepOut).length?'done':'idle');if(!Object.keys(p.out).length)p.out=keepOut}
+    else{p.status='err';p.err=['not_granted','rate_limited','session_expired','refused','image_rejected','images_unavailable'].includes(c)?c:(['sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)?'off':'other');if(!Object.keys(p.out).length)p.out=keepOut}
+  }
+  clearInterval(p.timer);p.ctl=null;
+  if(!p.out[p.tab])p.tab=Object.keys(p.out)[0]||'ar';
+  renderPlate(p);renderBar();
+  return p.status;
+}
+
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=src})}
+async function toJpeg(file){
+  const src=URL.createObjectURL(file);
+  try{
+    const img=await loadImg(src);
+    const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height;
+    if(!w0||!h0)throw new Error('size');
+    const k=Math.min(1,1600/Math.max(w0,h0)),w=Math.max(1,Math.round(w0*k)),h=Math.max(1,Math.round(h0*k));
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(img,0,0,w,h);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));
+    if(!blob)throw new Error('encode');
+    return blob;
+  }finally{URL.revokeObjectURL(src)}
+}
+async function addFiles(list){
+  const files=[...(list||[])];
+  if(!files.length)return;
+  let room=10-products.filter(p=>!p.example).length,skipped=false,notImg=false,added=0;
+  const drop=$('#drop');drop.classList.add('busy');flash(t('preparing'));
+  for(const f of files){
+    if(room<=0){skipped=true;break}
+    const looksImage=(f.type||'').startsWith('image/')||/\.(jpe?g|png|webp|gif|heic|heif|bmp|avif)$/i.test(f.name||'')||!f.type;
+    if(!looksImage){notImg=true;continue}
+    const p={id:'p'+(++seq)+Date.now().toString(36),example:false,url:'',file:null,notes:'',status:'idle',tab:'ar',seen:null,out:{}};
+    try{const jpg=await toJpeg(f);p.file=jpg;p.url=URL.createObjectURL(jpg);if(imgLimits&&imgLimits.maxInputBytes&&jpg.size>imgLimits.maxInputBytes){p.status='err';p.err='big'}}
+    catch(e){if(!(f.type||'').startsWith('image/')&&!/\.(jpe?g|png|webp|gif|heic|heif|bmp|avif)$/i.test(f.name||'')){notImg=true;continue}p.status='err';p.err='type';p.url=EX_URL.replace('#f3e6ea','#d9e2ea')}
+    products.push(p);room--;added++;
+  }
+  drop.classList.remove('busy');
+  renderPlates();renderBar();
+  if(skipped)flash(t('tooMany'),true);else if(notImg)flash(t('notImage'),true);else $('#msg').textContent='';
+  if(added){const all=document.querySelectorAll('.plate:not(#ex)');const last=all[all.length-added];if(last)last.scrollIntoView({behavior:'smooth',block:'start'})}
+}
+
+function fieldsHTML(p){
+  const o=p.out[p.tab]||{},L=T[S.lang];
+  return KEYS.filter(k=>o[k]!=null&&(!(k==='features')||S.inc.features||o[k])).map(k=>{
+    const v=fieldText(o,k,p.tab),lim=LIMIT[k];
+    const cnt=lim?'<span class="cnt'+(v.length>lim?' over':'')+'">'+v.length+'/'+lim+'</span>':'';
+    return '<div class="f'+(k==='title'?' t':'')+'"><div class="fh"><b>'+L.fields[k]+'</b>'+cnt+'<button type="button" class="cp" data-copy="'+k+'">'+L.copy+'</button></div><textarea rows="1" data-k="'+k+'" dir="'+(p.tab==='ar'?'rtl':'ltr')+'" lang="'+p.tab+'">'+esc(v)+'</textarea></div>';
+  }).join('');
+}
+function plateHTML(p){
+  const L=T[S.lang];
+  const seen=p.seen?'<div class="seen"><span>'+L.seen+'</span>'+((p.seen.items[S.lang]||p.seen.items.ar||p.seen.items.en||[]).map(x=>'<i>'+esc(x)+'</i>').join(''))+'</div>':'';
+  const langs=Object.keys(p.out).filter(l=>LANGS.includes(l)).sort((a,b)=>LANGS.indexOf(a)-LANGS.indexOf(b));
+  let out='';
+  if(p.status==='run'&&!langs.length)out='<div class="wait"><p>'+L.analyzing+' <span class="secs">'+L.secs(Math.round((Date.now()-(p.t0||Date.now()))/1000))+'</span></p><div class="prog"><i></i></div></div>';
+  else if(langs.length){
+    out='<div class="ltabs" role="tablist">'+langs.map(l=>'<button type="button" role="tab" data-tab="'+l+'" aria-selected="'+(l===p.tab)+'">'+L.lname[l]+'</button>').join('')+'<button type="button" class="ghost" data-copyall>'+L.copyAll+'</button></div>'+(p.status==='run'?'<div class="prog"><i></i></div>':'')+fieldsHTML(p);
+  } else if(p.status!=='err')out='<p class="idle">'+L.idle+'</p>';
+  if(p.status==='err')out+='<p class="err">'+esc(L.err[p.err]||L.err.other)+'</p>';
+  const btn=p.status==='run'?'<button type="button" class="prim" data-stop>'+L.stop+'</button>':'<button type="button" class="prim" data-gen'+(p.err==='type'||p.err==='big'?' disabled':'')+'>'+(langs.length?L.regen:L.gen)+'</button>';
+  return '<article class="plate" id="'+p.id+'"><div class="side"><div class="ph"><img src="'+esc(p.url)+'" alt="">'+(p.example?'<span class="tag">'+L.example+'</span>':'')+'</div><label for="n-'+p.id+'">'+L.notesL+'</label><textarea class="notes" id="n-'+p.id+'" dir="auto" placeholder="'+esc(L.notesPh)+'">'+esc(p.notes)+'</textarea><div class="pb">'+btn+'<button type="button" class="ghost" data-del>'+L.del+'</button></div>'+seen+'</div><div class="out">'+out+'</div></article>';
+}
+function fit(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
+function fitAll(root){(root||document).querySelectorAll('.f textarea').forEach(fit)}
+function renderPlate(p){const el=document.getElementById(p.id);if(!el){renderPlates();return}el.outerHTML=plateHTML(p);fitAll(document.getElementById(p.id))}
+function renderPlates(){const box=$('#plates');box.innerHTML=products.length?products.map(plateHTML).join(''):'<div class="empty">'+t('empty')+'</div>';fitAll(box)}
+function renderBar(){
+  $('#listH').textContent=t('list')(products.length);
+  const g=$('#genAll');g.disabled=!!batch||!products.some(p=>!p.example&&p.status!=='run'&&p.err!=='type'&&p.err!=='big');
+  g.textContent=batch?t('genAllRun')(batch.i,batch.n):t('genAll');
+}
+function renderStatus(){
+  const d=$('#dot');d.className='dot'+(aiState==='on'?' on':aiState==='wait'?'':' off');
+  $('#aiTxt').textContent=aiState==='on'?t('aiOn'):aiState==='wait'?t('aiWait'):aiState==='noimg'?t('aiNoImg'):t('aiOff');
+}
+function renderOpts(){
+  const L=T[S.lang];
+  const seg=(name,label,opts,cur,multi)=>'<div class="opt"><span>'+label+'</span><div class="seg" data-opt="'+name+'">'+Object.keys(opts).map(k=>'<button type="button" data-v="'+k+'" aria-pressed="'+(multi?!!cur[k]:cur===k)+'">'+opts[k]+'</button>').join('')+'</div></div>';
+  $('#opts').innerHTML=seg('langs',L.langs,L.lname,S.langs,true)+seg('tone',L.tone,L.tones,S.tone)+seg('len',L.length,L.lengths,S.len)+seg('inc',L.include,L.inc,S.inc,true)+seg('q',L.quality,L.q,S.q);
+}
+function applyLang(){
+  const r=document.documentElement;r.lang=S.lang;r.dir=S.lang==='ar'?'rtl':'ltr';
+  for(const k of ['h1','lead','dropT','dropS','foot'])$('#'+k).textContent=t(k);
+  $('#pickT').textContent=t('pick');$('#file').setAttribute('aria-label',t('pick'));
+  $('#copyCsv').textContent=t('copyCsv');$('#dlCsv').textContent=t('dlCsv');$('#clearAll').textContent=t('clear');
+  $('#langBtn').textContent=t('langBtn');$('#langBtn').setAttribute('aria-label',t('langAria'));
+  document.title=S.lang==='ar'?'كاتب أوصاف المنتجات':'Product listing writer';
+  renderStatus();renderOpts();renderPlates();renderBar();
+}
+let flashT=null;
+function flash(s,warn){const m=$('#msg');m.textContent=s;m.style.color=warn?'var(--oink)':'var(--gink)';clearTimeout(flashT);flashT=setTimeout(()=>{m.textContent=''},4000)}
+async function copyText(s,btn){
+  try{await navigator.clipboard.writeText(s);if(btn){const o=btn.textContent;btn.textContent=t('copied');setTimeout(()=>{btn.textContent=o},1400)}return true}
+  catch(e){flash(t('copyFail'),true);return false}
+}
+function csv(){
+  const L=T[S.lang],cols=['product','language'].concat(KEYS);
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[cols.join(',')];
+  products.forEach((p,i)=>{for(const l of LANGS){const o=p.out[l];if(!o)continue;rows.push([q((i+1)+(p.notes?' - '+p.notes:'')),q(l)].concat(KEYS.map(k=>q(k==='features'?(o[k]||[]).join(' | '):fieldText(o,k,l)))).join(','))}});
+  return rows.length>1?rows.join('\r\n'):'';
+}
+function allText(p){const L=T[S.lang],o=p.out[p.tab]||{};return KEYS.filter(k=>o[k]!=null).map(k=>L.fields[k]+'\n'+fieldText(o,k,p.tab)).join('\n\n')}
+
+const onPick=e=>{const fl=e.target.files;if(!fl||!fl.length)return;const copy=[...fl];e.target.value='';addFiles(copy)};
+$('#file').addEventListener('change',onPick);
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files)});
+$('#opts').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-v]');if(!b)return;const name=b.parentElement.dataset.opt,v=b.dataset.v;
+  if(name==='langs'||name==='inc'){const o=S[name];o[v]=!o[v];if(!Object.values(o).some(Boolean))o[v]=true}else S[name]=v;
+  save();renderOpts();
+});
+$('#plates').addEventListener('click',e=>{
+  const plate=e.target.closest('.plate');if(!plate)return;const p=products.find(x=>x.id===plate.id);if(!p)return;
+  if(e.target.closest('[data-gen]')){generate(p);return}
+  if(e.target.closest('[data-stop]')){if(p.ctl)p.ctl.abort();return}
+  if(e.target.closest('[data-del]')){if(p.ctl)p.ctl.abort();clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);products=products.filter(x=>x!==p);renderPlates();renderBar();return}
+  const tb=e.target.closest('[data-tab]');if(tb){p.tab=tb.dataset.tab;renderPlate(p);return}
+  const cp=e.target.closest('[data-copy]');if(cp){const ta=plate.querySelector('textarea[data-k="'+cp.dataset.copy+'"]');copyText(ta?ta.value:'',cp);return}
+  const ca=e.target.closest('[data-copyall]');if(ca){copyText(allText(p),ca)}
+});
+$('#plates').addEventListener('input',e=>{
+  const plate=e.target.closest('.plate');if(!plate)return;const p=products.find(x=>x.id===plate.id);if(!p)return;
+  if(e.target.classList.contains('notes')){p.notes=e.target.value;return}
+  const k=e.target.dataset.k;if(!k||!p.out[p.tab])return;
+  setField(p.out[p.tab],k,e.target.value);fit(e.target);
+  const lim=LIMIT[k];if(lim){const c=e.target.parentElement.querySelector('.cnt');if(c){c.textContent=e.target.value.length+'/'+lim;c.classList.toggle('over',e.target.value.length>lim)}}
+});
+$('#genAll').addEventListener('click',async()=>{
+  if(batch)return;
+  const todo=products.filter(p=>!p.example&&p.status!=='run'&&p.err!=='type'&&p.err!=='big'&&!Object.keys(p.out).length);
+  const list=todo.length?todo:products.filter(p=>!p.example&&p.status!=='run'&&p.err!=='type'&&p.err!=='big');
+  if(!list.length)return;
+  batch={i:0,n:list.length};
+  for(const p of list){if(!products.includes(p))continue;batch.i++;renderBar();const st=await generate(p);if(st==='err'&&['not_granted','rate_limited','session_expired','off','images_unavailable'].includes(p.err))break}
+  batch=null;renderBar();
+});
+$('#copyCsv').addEventListener('click',async e=>{const c=csv();if(!c){flash(t('noData'),true);return}if(await copyText(c,null))flash(t('csvCopied'))});
+$('#dlCsv').addEventListener('click',async()=>{
+  const c=csv();if(!c){flash(t('noData'),true);return}
+  if(!downloads)return;
+  try{await downloads.save({filename:'product-listings.csv',data:'﻿'+c});flash(t('saved'))}catch(e){if(e&&e.code!=='declined')flash(t('err').other,true)}
+});
+$('#clearAll').addEventListener('click',()=>{products.forEach(p=>{if(p.ctl)p.ctl.abort();clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url)});products=[];renderPlates();renderBar()});
+$('#langBtn').addEventListener('click',()=>{S.lang=S.lang==='ar'?'en':'ar';save();applyLang()});
+window.addEventListener('resize',()=>fitAll());
+applyLang();
+}
+</script>
+</body>
+</html>
