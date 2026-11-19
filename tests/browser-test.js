@@ -225,8 +225,81 @@ async function screenshots(browser, photo) {
     await scenario('network error', (route) => route.abort('internetdisconnected'), /Couldn’t reach the server/);
     await scenario('demo paused', json(503, { error: 'paused' }), /demo is paused/);
     check((await page2.textContent('#aiTxt')) === 'Demo paused', 'status dot switches to "Demo paused"');
+    // The "try again after" time stays put when the page re-renders later.
+    await page2.route('**/api/generate.php', json(429, { error: 'rate_limited', retry_after: 1800 }));
+    const r5 = await uploadAndGenerate(page2, photo, 'mug');
+    await waitIdle(page2, r5.id);
+    const firstMsg = await r5.plate.locator('.out > .err').textContent();
+    await page2.evaluate(() => { const real = Date.now.bind(Date); Date.now = () => real() + 20 * 60 * 1000; });
+    await page2.click('#langBtn');
+    await page2.click('#langBtn');
+    const laterMsg = await r5.plate.locator('.out > .err').textContent();
+    check(firstMsg === laterMsg, `"try again after" time doesn't move on re-render: ${laterMsg}`);
+    await page2.unroute('**/api/generate.php');
     const unexpected = errors2.filter((e) => !/Failed to load resource/.test(e));
     check(unexpected.length === 0, 'no unexpected console errors' + (unexpected.length ? ': ' + unexpected.join(' | ') : ''));
+    await page2.close();
+
+    console.log('Stop, double-click and copy');
+    const page3 = await ctx.newPage();
+    const errors4 = collectErrors(page3);
+    await page3.goto(APP);
+    await page3.waitForSelector('#dot.on');
+    // A double-click on "Write listing" must not stop the run (Stop takes the button's place).
+    const before = await page3.locator('.plate:not(#ex)').count();
+    await page3.setInputFiles('#file', photo);
+    const p6 = page3.locator('.plate:not(#ex)').nth(before);
+    await p6.waitFor();
+    const id6 = await p6.getAttribute('id');
+    const r6 = { plate: page3.locator('#' + id6), id: id6 };
+    await r6.plate.locator('textarea.notes').fill('mug mock:slow');
+    await r6.plate.locator('[data-gen]').dblclick();
+    await page3.waitForTimeout(300);
+    check((await r6.plate.locator('[data-stop]').count()) === 1, 'a double-click on "Write listing" keeps the run going');
+    await waitIdle(page3, r6.id);
+    check((await r6.plate.locator('[data-tab]:not([data-st])').count()) === 3, 'and the listing arrives in three languages');
+    // Stop after one language arrived keeps the earlier listing (and edits) for the others.
+    await r6.plate.locator('[data-tab="en"]').click();
+    await r6.plate.locator('textarea[data-k="title"]').fill('My edited English title');
+    await r6.plate.locator('textarea.notes').fill('mug mock:slow-but-ar');
+    await r6.plate.locator('[data-gen]').click();
+    await r6.plate.locator('[data-tab="ar"]:not([data-st])').waitFor();
+    await page3.waitForTimeout(800);
+    await r6.plate.locator('[data-stop]').click();
+    await waitIdle(page3, r6.id, 5000);
+    await r6.plate.locator('[data-tab="en"]').click();
+    check((await r6.plate.locator('[data-tab]:not([data-st])').count()) === 3 && (await r6.plate.locator('textarea[data-k="title"]').inputValue()) === 'My edited English title',
+      'Stop keeps the earlier listing, edits included, for languages that had not arrived');
+    // Copy twice quickly: the label still comes back.
+    const copyBtn = r6.plate.locator('[data-copy="title"]');
+    await copyBtn.click();
+    await copyBtn.click();
+    await page3.waitForTimeout(1700);
+    check((await copyBtn.textContent()) === 'Copy', 'the "Copied" label goes back to "Copy" after two quick clicks');
+    // Stop during "Generate all" ends the whole batch.
+    const g = [];
+    for (let i = 0; i < 2; i++) {
+      const n = await page3.locator('.plate:not(#ex)').count();
+      await page3.setInputFiles('#file', photo);
+      const pl = page3.locator('.plate:not(#ex)').nth(n);
+      await pl.waitFor();
+      await pl.locator('textarea.notes').fill('mug mock:slow');
+      g.push(page3.locator('#' + (await pl.getAttribute('id'))));
+    }
+    await page3.click('#genAll');
+    await g[0].locator('[data-stop]').waitFor();
+    await page3.waitForTimeout(800);
+    await g[0].locator('[data-stop]').click();
+    await page3.waitForFunction(() => !document.getElementById('genAll').disabled, null, { timeout: 10000 });
+    check((await g[1].locator('.idle').count()) === 1 && (await page3.locator('[data-stop]').count()) === 0, 'Stop during "Generate all" ends the batch');
+    // A photo dropped outside the drop area doesn't open in the tab.
+    const prevented = await page3.evaluate(() => {
+      const ev = new DragEvent('drop', { dataTransfer: new DataTransfer(), bubbles: true, cancelable: true });
+      document.querySelector('h1').dispatchEvent(ev);
+      return ev.defaultPrevented;
+    });
+    check(prevented, 'a photo dropped outside the drop area does not replace the page');
+    check(errors4.length === 0, 'no console errors' + (errors4.length ? ': ' + errors4.join(' | ') : ''));
     await ctx.close();
 
     console.log('Phone');

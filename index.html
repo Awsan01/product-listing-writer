@@ -296,7 +296,7 @@ async function generate(p,only){
   if(!p.file&&p.example){try{p.file=await rasterize()}catch(e){p.status='err';p.err='example';renderPlate(p);return {st:p.status,errs:['example']}}}
   const langs=only?[only]:selLangs(),o=settings(p);
   if(p.status!=='run'){p.ctl=new AbortController();p.t0=Date.now();p.stopped=false}
-  if(!only){p.keepOut=p.out;p.out={};p.seen=null;p.jobs={};p.err='';p.picked=false;if(!langs.includes(p.tab))p.tab=langs[0]}
+  if(!only){p.keepOut=p.out;p.keepSeen=p.seen;p.out={};p.seen=null;p.jobs={};p.err='';p.picked=false;if(!langs.includes(p.tab))p.tab=langs[0]}
   for(const l of langs)p.jobs[l]={st:'run',prev:only?jobs0[l]:null};
   p.status='run';
   if(!p.timer)p.timer=setInterval(()=>{const el=document.querySelector('#'+p.id+' .secs');if(el)el.textContent=t('secs')(Math.round((Date.now()-p.t0)/1000))},1000);
@@ -306,7 +306,7 @@ async function generate(p,only){
     let j;
     try{j=await request(p,l,o,ctl.signal)}
     catch(e){if(ctl.signal.aborted){const prev=p.jobs[l]&&p.jobs[l].prev;if(prev)p.jobs[l]=prev;else delete p.jobs[l];return}j={error:'other'}}
-    if(j.error){errs.push(j.error);p.jobs[l]={st:'err',err:j.error,retry:j.retry};if(j.error==='paused'&&aiState!=='off'){aiState='off';renderStatus()}}
+    if(j.error){errs.push(j.error);p.jobs[l]={st:'err',err:j.error,retryAt:j.retry?Date.now()+j.retry*1000:0};if(j.error==='paused'&&aiState!=='off'){aiState='off';renderStatus()}}
     else if(take(p,l,j,o.ui)){p.jobs[l]={st:'done'};if(aiState!=='on'){aiState='on';renderStatus()}if(!p.picked&&!p.out[p.tab])p.tab=l}
     else{errs.push('format');p.jobs[l]={st:'err',err:'format'}}
     renderPlate(p);
@@ -314,21 +314,25 @@ async function generate(p,only){
   settle(p);
   return {st:p.status,errs};
 }
-// Runs when a product's last request ends: keeps what arrived, or restores the old listing if nothing did.
+// Runs when a product's last request ends. Keeps what arrived; after Stop, languages that didn't arrive keep
+// their earlier listing, and when every language failed the earlier listing comes back with the error.
 function settle(p){
   const jobs=p.jobs||{};
   if(Object.values(jobs).some(j=>j.st==='run'))return;
   clearInterval(p.timer);p.timer=null;p.ctl=null;
+  if(p.stopped&&p.keepOut){p.out=Object.assign({},p.keepOut,p.out);for(const l in jobs)if(p.out[l])delete jobs[l]}
   const got=Object.keys(p.out).length;
   if(got){p.status='done';for(const l in jobs)if(jobs[l].st!=='err')delete jobs[l]}
-  else if(p.stopped){p.out=p.keepOut||{};p.jobs={};p.status=Object.keys(p.out).length?'done':'idle'}
-  else{const e=Object.values(jobs).find(j=>j.st==='err')||{};p.status='err';p.err=e.err||'other';p.retry=e.retry||0;p.out=p.keepOut||{};p.jobs={}}
+  else if(p.stopped){p.jobs={};p.status='idle'}
+  else{const e=Object.values(jobs).find(j=>j.st==='err')||{};p.status='err';p.err=e.err||'other';p.retryAt=e.retryAt||0;p.out=p.keepOut||{};p.jobs={}}
+  if(!p.seen)p.seen=p.keepSeen||null;
+  p.keepOut=p.keepSeen=null;
   renderPlate(p);renderBar();
 }
-function errText(code,retry){
+function errText(code,retryAt){
   const E=T[S.lang].err;
-  if(code==='rate_limited'&&retry>90){
-    const d=new Date(Date.now()+retry*1000),at=d.toLocaleTimeString(S.lang==='ar'?'ar-u-nu-latn':'en',{hour:'numeric',minute:'2-digit'});
+  if(code==='rate_limited'&&retryAt-Date.now()>90000){
+    const d=new Date(retryAt),at=d.toLocaleTimeString(S.lang==='ar'?'ar-u-nu-latn':'en',{hour:'numeric',minute:'2-digit'});
     return d.toDateString()===new Date().toDateString()?E.rateAt(at):E.rateTomorrow(at);
   }
   if(code==='too_large')return E.big;
@@ -383,7 +387,7 @@ function waitHTML(p,bar){const L=T[S.lang];return '<div class="wait"><p>'+L.anal
 function tabBody(p){
   const j=(p.jobs||{})[p.tab];
   if(p.out[p.tab])return fieldsHTML(p);
-  if(j&&j.st==='err')return '<div class="terr"><p class="err">'+esc(errText(j.err,j.retry))+'</p><button type="button" class="ghost" data-retry="'+p.tab+'">'+T[S.lang].retry+'</button></div>';
+  if(j&&j.st==='err')return '<div class="terr"><p class="err">'+esc(errText(j.err,j.retryAt))+'</p><button type="button" class="ghost" data-retry="'+p.tab+'">'+T[S.lang].retry+'</button></div>';
   return waitHTML(p,false);
 }
 function plateHTML(p){
@@ -396,7 +400,7 @@ function plateHTML(p){
   else if(langs.length){
     out='<div class="ltabs" role="tablist">'+langs.map(l=>{const st=p.out[l]?'':jobs[l].st;return '<button type="button" role="tab" data-tab="'+l+'"'+(st==='run'||st==='err'?' data-st="'+st+'"':'')+' aria-selected="'+(l===p.tab)+'">'+L.lname[l]+'</button>'}).join('')+(p.out[p.tab]?'<button type="button" class="ghost" data-copyall>'+L.copyAll+'</button>':'')+'</div>'+(p.status==='run'?'<div class="prog"><i></i></div>':'')+tabBody(p);
   } else if(p.status!=='err')out='<p class="idle">'+L.idle+'</p>';
-  if(p.status==='err')out+='<p class="err">'+esc(errText(p.err,p.retry))+'</p>';
+  if(p.status==='err')out+='<p class="err">'+esc(errText(p.err,p.retryAt))+'</p>';
   const btn=p.status==='run'?'<button type="button" class="prim" data-stop>'+L.stop+'</button>':'<button type="button" class="prim" data-gen'+(p.err==='type'||p.err==='big'?' disabled':'')+'>'+(has?L.regen:L.gen)+'</button>';
   return '<article class="plate" id="'+p.id+'"><div class="side"><div class="ph"><img src="'+esc(p.url)+'" alt="">'+(p.example?'<span class="tag">'+L.example+'</span>':'')+'</div><label for="n-'+p.id+'">'+L.notesL+'</label><textarea class="notes" id="n-'+p.id+'" dir="auto" maxlength="600" placeholder="'+esc(L.notesPh)+'">'+esc(p.notes)+'</textarea><div class="pb">'+btn+'<button type="button" class="ghost" data-del>'+L.del+'</button></div>'+seen+'</div><div class="out">'+out+'</div></article>';
 }
@@ -437,7 +441,7 @@ function applyLang(){
 let flashT=null;
 function flash(s,warn){const m=$('#msg');m.textContent=s;m.style.color=warn?'var(--oink)':'var(--gink)';clearTimeout(flashT);flashT=setTimeout(()=>{m.textContent=''},4000)}
 async function copyText(s,btn){
-  try{await navigator.clipboard.writeText(s);if(btn){const o=btn.textContent;btn.textContent=t('copied');setTimeout(()=>{btn.textContent=o},1400)}return true}
+  try{await navigator.clipboard.writeText(s);if(btn){if(!btn.dataset.label)btn.dataset.label=btn.textContent;btn.textContent=t('copied');clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.textContent=btn.dataset.label},1400)}return true}
   catch(e){flash(t('copyFail'),true);return false}
 }
 function csv(){
@@ -455,6 +459,9 @@ const drop=$('#drop');
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files)});
+// A photo dropped next to the drop area must not open in the tab: that would lose every listing.
+window.addEventListener('dragover',e=>{if(!drop.contains(e.target)){e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='none'}});
+window.addEventListener('drop',e=>{if(!drop.contains(e.target))e.preventDefault()});
 $('#opts').addEventListener('click',e=>{
   const b=e.target.closest('button[data-v]');if(!b)return;const name=b.parentElement.dataset.opt,v=b.dataset.v;
   if(name==='langs'||name==='inc'){const o=S[name];o[v]=!o[v];if(!Object.values(o).some(Boolean))o[v]=true}else S[name]=v;
@@ -464,7 +471,7 @@ $('#plates').addEventListener('click',e=>{
   const plate=e.target.closest('.plate');if(!plate)return;const p=products.find(x=>x.id===plate.id);if(!p)return;
   if(e.target.closest('[data-gen]')){generate(p);return}
   const rt=e.target.closest('[data-retry]');if(rt){generate(p,rt.dataset.retry);return}
-  if(e.target.closest('[data-stop]')){if(p.ctl){p.stopped=true;p.ctl.abort()}return}
+  if(e.target.closest('[data-stop]')){if(p.ctl&&Date.now()-p.t0>700){p.stopped=true;p.ctl.abort();if(batch&&batch.cur===p)batch.cancel=true}return} // Stop takes the button's place: a double-click must not stop the run it started
   if(e.target.closest('[data-del]')){if(p.ctl){p.stopped=true;p.ctl.abort()}clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);products=products.filter(x=>x!==p);renderPlates();renderBar();return}
   const tb=e.target.closest('[data-tab]');if(tb){p.tab=tb.dataset.tab;p.picked=true;renderPlate(p);return}
   const cp=e.target.closest('[data-copy]');if(cp){const ta=plate.querySelector('textarea[data-k="'+cp.dataset.copy+'"]');copyText(ta?ta.value:'',cp);return}
@@ -483,7 +490,7 @@ $('#genAll').addEventListener('click',async()=>{
   const list=todo.length?todo:products.filter(p=>!p.example&&p.status!=='run'&&p.err!=='type'&&p.err!=='big');
   if(!list.length)return;
   batch={i:0,n:list.length};
-  for(const p of list){if(!products.includes(p))continue;batch.i++;renderBar();const r=await generate(p);if(r&&r.errs.some(c=>c==='rate_limited'||c==='paused'))break}
+  for(const p of list){if(!products.includes(p))continue;batch.i++;batch.cur=p;renderBar();const r=await generate(p);if(batch.cancel||r&&r.errs.some(c=>c==='rate_limited'||c==='paused'))break}
   batch=null;renderBar();
 });
 $('#copyCsv').addEventListener('click',async e=>{const c=csv();if(!c){flash(t('noData'),true);return}if(await copyText(c,null))flash(t('csvCopied'))});

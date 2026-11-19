@@ -13,6 +13,7 @@
  *   mock:credit           400 "credit balance is too low"         mock:refusal     stop_reason refusal
  *   mock:badjson          text that isn't JSON                    mock:slow        waits 3 seconds
  *   mock:fail-tr          529 for Turkish, normal for the others  mock:image       400 image error
+ *   mock:slow-but-ar      Arabic answers at once, the others wait 3 seconds
  */
 declare(strict_types=1);
 
@@ -111,7 +112,11 @@ if (str_contains($prompt, 'mock:credit')) {
 if (str_contains($prompt, 'mock:image')) {
     api_error(400, 'invalid_request_error', 'messages.0.content.0.image.source.base64: The image could not be processed.');
 }
-if (str_contains($prompt, 'mock:slow')) {
+if (str_contains($prompt, 'mock:slow-but-ar')) {
+    if ($lang !== 'ar') {
+        sleep(3);
+    }
+} elseif (str_contains($prompt, 'mock:slow')) {
     sleep(3);
 }
 $usage = ['input_tokens' => 1650 + strlen($prompt) % 97, 'output_tokens' => 380 + count($fields) * 23];
