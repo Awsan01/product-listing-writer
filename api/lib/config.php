@@ -45,6 +45,11 @@ function load_app(): ?array
     if ($file === null) {
         return $app = null;
     }
+    if (function_exists('opcache_invalidate')) {
+        // Recompile the config when its timestamp changed, so pausing the demo works at once
+        // even on hosts that check cached PHP files only every few seconds or minutes.
+        @opcache_invalidate($file, false);
+    }
     try {
         ob_start();
         $raw = (static function (string $f) {
