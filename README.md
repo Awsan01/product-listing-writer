@@ -1,12 +1,5 @@
 # Product listing writer
 
-<div dir="rtl">
-
-ارفع صور منتجاتك واحصل على عنوان ووصف ومميزات وكلمات مفتاحية ومنشور إنستغرام، جاهزة للنسخ إلى متجرك بالعربية والإنجليزية والتركية.<br>
-واجهة عربية وإنجليزية بسيطة، وخادم PHP صغير يحتفظ بمفتاح Claude على الخادم ويحمي العرض بحدود استخدام واضحة.
-
-</div>
-
 **Live demo: [listing.awsankhaled.com](https://listing.awsankhaled.com)**
 
 Upload up to 10 product photos and get ready-to-paste store listings in Arabic, English and Turkish:
@@ -19,7 +12,7 @@ and English, on desktop and on phones.
 
 <p>
   <img src="docs/screenshots/listing.png" alt="A finished listing with language tabs and copy buttons" width="64%">
-  <img src="docs/screenshots/phone.png" alt="The same listing in Arabic on a phone" width="31%">
+  <img src="docs/screenshots/phone.png" alt="The same listing on a phone" width="31%">
 </p>
 
 <sub>The screenshots are taken by <code>tests/browser-test.js</code> against the mock API, so the listing text is sample text.</sub>
