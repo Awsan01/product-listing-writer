@@ -3,7 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Product listing writer</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>كاتب أوصاف المنتجات · Product listing writer</title>
+<meta name="description" content="ارفع صور منتجاتك واحصل على أوصاف جاهزة للمتجر بالعربية والإنجليزية والتركية. Turn product photos into ready-to-paste store listings in Arabic, English and Turkish.">
+<meta name="author" content="Awsan Khaled">
+<meta name="theme-color" content="#0d1c22">
+<link rel="canonical" href="https://listing.awsankhaled.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Product listing writer">
+<meta property="og:url" content="https://listing.awsankhaled.com/">
+<meta property="og:title" content="Product listing writer · كاتب أوصاف المنتجات">
+<meta property="og:description" content="Turn product photos into ready-to-paste store listings in Arabic, English and Turkish: title, description, SEO keywords and an Instagram post.">
+<meta property="og:image" content="https://listing.awsankhaled.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Product listing writer: a product photo beside its finished listing">
+<meta property="og:locale" content="ar_AR">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
@@ -81,6 +100,9 @@ h1{font-weight:400;font-size:clamp(32px,5vw,50px);line-height:1.1;letter-spacing
 .out{display:flex;flex-direction:column;gap:12px}
 .ltabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ltabs button{height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px}
+.ltabs button[data-st=run]::after{content:'…'}
+.ltabs button[data-st=err]{color:var(--oink);border-color:var(--oink)}
+.ltabs button[data-st=err]::after{content:' !'}
 .ltabs button[aria-selected=true]{background:var(--tabbg);color:var(--tabink);border-color:var(--tabbg)}
 .ltabs .ghost{height:38px;margin-inline-start:auto;font-size:14px}
 .f{border-top:1px solid var(--line);padding-top:10px}
@@ -101,9 +123,13 @@ h1{font-weight:400;font-size:clamp(32px,5vw,50px);line-height:1.1;letter-spacing
 [dir=rtl] .prog i{animation-name:slider}
 @keyframes slider{0%{transform:translateX(110%)}100%{transform:translateX(-260%)}}
 .err{color:var(--oink);font-size:14px}
+.terr{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:8px 0}
+.terr .err{margin:0}
 .idle{color:var(--mut);font-size:15px;margin:0;padding:8px 0}
 .empty{text-align:center;color:var(--mut);padding:30px 10px;border:1px dashed var(--line);border-radius:16px;background:var(--card)}
 .foot{color:var(--mut);font-size:13px;margin-top:18px}
+.sig{padding-top:0;text-align:center;color:var(--mut);font-size:13px}
+.sig .wrap{border-top:1px solid var(--line);padding-top:18px}
 @media(prefers-reduced-motion:reduce){.prog i{animation:none}button{transition:none}}
 </style>
 </head>
@@ -133,13 +159,14 @@ h1{font-weight:400;font-size:clamp(32px,5vw,50px);line-height:1.1;letter-spacing
     <h2 id="listH">المنتجات</h2>
     <button type="button" class="prim" id="genAll">توليد الكل</button>
     <button type="button" class="ghost" id="copyCsv">نسخ CSV</button>
-    <button type="button" class="ghost" id="dlCsv" hidden>تنزيل CSV</button>
+    <button type="button" class="ghost" id="dlCsv">تنزيل CSV</button>
     <button type="button" class="ghost" id="clearAll">مسح الكل</button>
     <span class="msg" id="msg" aria-live="polite"></span>
   </div>
   <div class="plates" id="plates"></div>
   <p class="foot" id="foot"></p>
 </div></main>
+<footer class="band sig"><div class="wrap">Built by Awsan Khaled</div></footer>
 <script>
 {
 const $=s=>document.querySelector(s);
@@ -150,34 +177,34 @@ const LIMIT={title:70,meta:155};
 const T={
 ar:{h1:'كاتب أوصاف المنتجات',lead:'ارفع صور منتجاتك واحصل على عنوان ووصف وكلمات مفتاحية ومنشور إنستغرام، بالعربية والإنجليزية والتركية.',
 dropT:'اسحب صور المنتجات هنا أو اخترها من جهازك',dropS:'حتى 10 صور · صورة واحدة لكل منتج · JPG أو PNG أو WebP',pick:'اختيار الصور',preparing:'جارٍ تجهيز الصور…',notImage:'تم تجاهل ملف ليس صورة.',
-aiOn:'المساعد جاهز',aiWait:'جارٍ الاتصال…',aiOff:'افتح الصفحة داخل Claude لتشغيل التوليد',aiNoImg:'هذا العرض لا يدعم قراءة الصور',
+aiOn:'المساعد جاهز',aiWait:'جارٍ الاتصال…',aiOff:'العرض متوقف مؤقتاً',aiDown:'تعذّر الاتصال بالخادم',
 langs:'لغات الوصف',tone:'الأسلوب',length:'الطول',include:'المحتوى',quality:'الجودة',
 tones:{lux:'فاخر',friendly:'ودود',pro:'احترافي',bold:'حماسي'},lengths:{short:'قصير',medium:'متوسط',long:'طويل'},
 inc:{features:'المميزات',seo:'كلمات SEO ووصف ميتا',social:'منشور إنستغرام'},q:{best:'أفضل جودة',fast:'أسرع'},
 list:n=>'المنتجات ('+n+')',genAll:'توليد الكل',genAllRun:(a,b)=>'جارٍ التوليد '+a+' من '+b,copyCsv:'نسخ CSV',dlCsv:'تنزيل CSV',clear:'مسح الكل',
-notesL:'تفاصيل إضافية (اختياري)',notesPh:'مثلاً: الاسم، الحجم، الخامة، السعر',gen:'توليد الوصف',regen:'إعادة التوليد',stop:'إيقاف',del:'حذف',
+notesL:'تفاصيل إضافية (اختياري)',notesPh:'مثلاً: الاسم، الحجم، الخامة، السعر',gen:'توليد الوصف',regen:'إعادة التوليد',stop:'إيقاف',del:'حذف',retry:'إعادة المحاولة',
 example:'مثال',seen:'ما يراه المساعد:',empty:'لا توجد منتجات بعد. ارفع صورة منتج للبدء.',idle:'اضغط «توليد الوصف» ليكتب المساعد الوصف من الصورة.',
 analyzing:'يحلل الصورة ويكتب الوصف…',secs:s=>s+' ث',
 fields:{title:'العنوان',short:'وصف قصير',description:'الوصف الكامل',features:'المميزات',keywords:'كلمات مفتاحية (SEO)',meta:'وصف ميتا',caption:'منشور إنستغرام',hashtags:'هاشتاقات'},
 copy:'نسخ',copied:'تم النسخ',copyAll:'نسخ الكل',copyFail:'تعذّر النسخ. حدّد النص وانسخه يدوياً.',csvCopied:'تم نسخ الجدول بصيغة CSV. الصقه في Excel أو Google Sheets.',saved:'تم حفظ الملف.',noData:'لا توجد أوصاف بعد.',
-err:{not_granted:'يحتاج التوليد إذنك لاستخدام Claude. أعد تحميل الصفحة واختر «السماح».',rate_limited:'طلبات كثيرة خلال وقت قصير. انتظر دقيقة ثم أعد المحاولة.',session_expired:'انتهت الجلسة. سجّل الدخول إلى Claude مرة أخرى.',refused:'تعذّر وصف هذه الصورة. جرّب صورة أخرى.',image_rejected:'تعذّر قراءة الصورة. استخدم JPG أو PNG أو WebP بحجم أصغر.',images_unavailable:'هذا العرض لا يدعم إرسال الصور.',format:'لم يصل الرد بالشكل المتوقع. أعد المحاولة.',off:'التوليد غير متاح في هذا العرض.',other:'حدث خطأ في الاتصال. أعد المحاولة.',example:'لإعادة توليد المثال، ارفع صورة حقيقية لمنتج.',big:'الصورة أكبر من الحجم المسموح.',type:'تعذّر فتح هذه الصورة على هذا الجهاز. جرّب صورة بصيغة JPG أو PNG.'},
+err:{rate_limited:'طلبات كثيرة خلال وقت قصير. انتظر دقيقة ثم أعد المحاولة.',rateAt:s=>'تم الوصول إلى حد الطلبات حالياً. أعد المحاولة بعد الساعة '+s+'.',rateTomorrow:s=>'تم الوصول إلى الحد اليومي للطلبات. أعد المحاولة غداً بعد الساعة '+s+'.',busy:'الخدمة مشغولة حالياً. أعد المحاولة بعد قليل.',paused:'العرض التجريبي متوقف مؤقتاً. حاول مرة أخرى لاحقاً.',network:'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',refused:'تعذّر وصف هذه الصورة. جرّب صورة أخرى.',photo_rejected:'تعذّر قراءة الصورة. استخدم JPG أو PNG أو WebP بحجم أصغر.',format:'لم يصل الرد بالشكل المتوقع. أعد المحاولة.',other:'حدث خطأ غير متوقع. أعد المحاولة.',example:'لإعادة توليد المثال، ارفع صورة حقيقية لمنتج.',big:'الصورة أكبر من الحجم المسموح.',type:'تعذّر فتح هذه الصورة على هذا الجهاز. جرّب صورة بصيغة JPG أو PNG.'},
 tooMany:'يمكن رفع 10 صور كحد أقصى.',lname:{ar:'العربية',en:'English',tr:'Türkçe'},
-foot:'المنتج الأول مثال مكتوب مسبقاً لعرض النتيجة. يعمل التوليد على Claude من حسابك، وتقدر تعدّل أي نص قبل نسخه.',langBtn:'EN',langAria:'English'},
+foot:'المنتج الأول مثال مكتوب مسبقاً لعرض النتيجة. تقدر تعدّل أي نص قبل نسخه.',langBtn:'EN',langAria:'English'},
 en:{h1:'Product listing writer',lead:'Upload product photos and get a title, description, SEO keywords and an Instagram post in Arabic, English and Turkish.',
 dropT:'Drop product photos here or choose them from your device',dropS:'Up to 10 photos · one photo per product · JPG, PNG or WebP',pick:'Choose photos',preparing:'Preparing photos…',notImage:'A file that isn’t a photo was skipped.',
-aiOn:'Assistant ready',aiWait:'Connecting…',aiOff:'Open this page in Claude to generate',aiNoImg:'This view can’t read images',
+aiOn:'Assistant ready',aiWait:'Connecting…',aiOff:'Demo paused',aiDown:'Can’t reach the server',
 langs:'Listing languages',tone:'Tone',length:'Length',include:'Content',quality:'Quality',
 tones:{lux:'Luxury',friendly:'Friendly',pro:'Professional',bold:'Bold'},lengths:{short:'Short',medium:'Medium',long:'Long'},
 inc:{features:'Features',seo:'SEO keywords and meta',social:'Instagram post'},q:{best:'Best quality',fast:'Faster'},
 list:n=>'Products ('+n+')',genAll:'Generate all',genAllRun:(a,b)=>'Generating '+a+' of '+b,copyCsv:'Copy CSV',dlCsv:'Download CSV',clear:'Clear all',
-notesL:'Extra details (optional)',notesPh:'For example: name, size, material, price',gen:'Write listing',regen:'Rewrite',stop:'Stop',del:'Remove',
+notesL:'Extra details (optional)',notesPh:'For example: name, size, material, price',gen:'Write listing',regen:'Rewrite',stop:'Stop',del:'Remove',retry:'Try again',
 example:'Example',seen:'What the assistant sees:',empty:'No products yet. Upload a product photo to start.',idle:'Press “Write listing” and the assistant writes it from the photo.',
 analyzing:'Reading the photo and writing the listing…',secs:s=>s+' s',
 fields:{title:'Title',short:'Short description',description:'Full description',features:'Features',keywords:'SEO keywords',meta:'Meta description',caption:'Instagram caption',hashtags:'Hashtags'},
 copy:'Copy',copied:'Copied',copyAll:'Copy all',copyFail:'Couldn’t copy. Select the text and copy it yourself.',csvCopied:'CSV copied. Paste it into Excel or Google Sheets.',saved:'File saved.',noData:'No listings yet.',
-err:{not_granted:'Generating needs your permission to use Claude. Reload the page and choose Allow.',rate_limited:'Too many requests in a short time. Wait a minute and try again.',session_expired:'Your session ended. Sign in to Claude again.',refused:'Couldn’t describe this photo. Try another one.',image_rejected:'Couldn’t read the photo. Use a smaller JPG, PNG or WebP.',images_unavailable:'This view can’t send images.',format:'The reply came back in an unexpected format. Try again.',off:'Generating isn’t available in this view.',other:'Connection problem. Try again.',example:'To rewrite the example, upload a real product photo.',big:'The photo is larger than allowed.',type:'This photo couldn’t be opened on this device. Try a JPG or PNG.'},
+err:{rate_limited:'Too many requests in a short time. Wait a minute and try again.',rateAt:s=>'The request limit has been reached for now. Try again after '+s+'.',rateTomorrow:s=>'The daily request limit has been reached. Try again tomorrow after '+s+'.',busy:'The service is busy right now. Try again in a moment.',paused:'The demo is paused right now. Please try again later.',network:'Couldn’t reach the server. Check your connection and try again.',refused:'Couldn’t describe this photo. Try another one.',photo_rejected:'Couldn’t read the photo. Use a smaller JPG, PNG or WebP.',format:'The reply came back in an unexpected format. Try again.',other:'Something went wrong. Try again.',example:'To rewrite the example, upload a real product photo.',big:'The photo is larger than allowed.',type:'This photo couldn’t be opened on this device. Try a JPG or PNG.'},
 tooMany:'You can upload up to 10 photos.',lname:{ar:'العربية',en:'English',tr:'Türkçe'},
-foot:'The first product is a pre-written example that shows the result. Generating runs on Claude with your account, and you can edit any text before copying it.',langBtn:'ع',langAria:'العربية'}
+foot:'The first product is a pre-written example that shows the result. You can edit any text before copying it.',langBtn:'ع',langAria:'العربية'}
 };
 const S={lang:'ar',langs:{ar:true,en:true,tr:true},tone:'lux',len:'medium',inc:{features:true,seo:true,social:true},q:'best'};
 try{const v=JSON.parse(localStorage.getItem('listing-writer')||'{}');Object.assign(S,v);S.langs=Object.assign({ar:true,en:true,tr:true},v.langs||{});S.inc=Object.assign({features:true,seo:true,social:true},v.inc||{})}catch(e){}
@@ -209,12 +236,12 @@ const example=()=>({id:'ex',example:true,url:EX_URL,file:null,notes:'عطر نس
   caption:'Taif gülü ve yumuşak misk… sessiz ama etkileyici bir zarafet 🌹\nKendinize ya da sevdiklerinize hemen sipariş verin.',hashtags:['#gülparfümü','#kadınparfümü','#taifgülü','#hediye','#parfüm']}
  }});
 
-let products=[example()],seq=0,sample=null,imgLimits=null,downloads=null,aiState='wait',batch=null;
-const ready=(async()=>{
-  try{sample=window.claude&&typeof window.claude.use==='function'?await window.claude.use('sample'):null}catch(e){sample=null}
-  if(sample){try{const l=await sample.limits();imgLimits=l&&l.images?l.images:null}catch(e){imgLimits=null}aiState=imgLimits?'on':'noimg'}else aiState='off';
-  try{downloads=window.claude&&typeof window.claude.use==='function'?await window.claude.use('downloads'):null}catch(e){downloads=null}
-  renderStatus();$('#dlCsv').hidden=!downloads;
+let products=[example()],seq=0,aiState='wait',batch=null;
+const MAX_BYTES=5*1024*1024,MAX_SIDE=1568,MAX_PARALLEL=3;
+(async()=>{
+  try{const r=await fetch('api/health.php',{cache:'no-store'});const j=await r.json().catch(()=>null);aiState=j&&j.ok===true?'on':'off'}
+  catch(e){aiState='down'}
+  renderStatus();
 })();
 
 function selLangs(){return LANGS.filter(l=>S.langs[l])}
@@ -223,79 +250,89 @@ function splitList(s){return String(s||'').split(/[,،\n]+/).map(x=>x.trim()).fi
 function fieldText(o,k,l){const v=o[k];if(v==null)return '';if(k==='features')return v.map(x=>'• '+x).join('\n');if(k==='keywords')return joinList(v,l);if(k==='hashtags')return v.join(' ');return v}
 function setField(o,k,txt){if(k==='features')o[k]=String(txt).split('\n').map(x=>x.replace(/^[•\-\*]\s*/,'').trim()).filter(Boolean);else if(k==='keywords')o[k]=splitList(txt);else if(k==='hashtags')o[k]=String(txt).split(/\s+/).filter(Boolean);else o[k]=txt}
 
-function promptFor(p){
-  const L=selLangs(),names={ar:'Arabic',en:'English',tr:'Turkish'},ui=S.lang==='ar'?'Arabic':'English';
-  const tone={lux:'elegant and premium',friendly:'warm and friendly',pro:'clear and professional',bold:'energetic and persuasive'}[S.tone];
-  const words={short:'40 to 60',medium:'80 to 120',long:'150 to 200'}[S.len];
-  const f=['"title":"..."','"short":"..."','"description":"..."'];
-  if(S.inc.features)f.push('"features":["..."]');
-  if(S.inc.seo)f.push('"keywords":["..."]','"meta":"..."');
-  if(S.inc.social)f.push('"caption":"..."','"hashtags":["#..."]');
-  return `You write e-commerce product listings from a product photo.
-The attached photo shows the product. Seller's notes: ${p.notes.trim()?'«'+p.notes.trim().slice(0,600)+'»':'none'}.
-Write the listing in: ${L.map(l=>names[l]).join(', ')}. Tone: ${tone}.
-
-Rules
-- Describe only what you can see in the photo or read in the notes. Never invent sizes, materials, ingredients, certifications, prices, brand names or performance claims such as how long something lasts. Leave out anything you are unsure about.
-- Write each language natively, not as a word-for-word translation, with correct grammar and natural word order. Arabic: Modern Standard Arabic that Gulf shoppers find natural. Turkish: natural Turkish e-commerce style.
-- title: up to 70 characters, with the product type and its main feature.
-- short: one sentence.
-- description: ${words} words in two short paragraphs separated by \\n\\n.
-${S.inc.features?'- features: 3 to 5 short points.\n':''}${S.inc.seo?'- keywords: 8 to 12 search phrases shoppers would type in that language, most important first.\n- meta: up to 155 characters, for search results.\n':''}${S.inc.social?'- caption: an Instagram caption of 1 to 3 short lines with at most one emoji.\n- hashtags: 5 to 8 hashtags in that language.\n':''}
-Output: one JSON object per line and nothing else. Never put a line break inside an object; write line breaks inside text as \\n.
-Line 1: {"type":"seen","product":"<what the product is, in ${ui}>","items":["<3 to 6 short things you can see, in ${ui}>"]}
-Then one line per language, in this order: ${L.join(', ')}. Each line:
-{"type":"listing","lang":"<${L.join('|')}>",${f.join(',')}}`;
-}
-function parseLine(line){
-  let s=String(line||'').trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
-  if(!s)return null;
-  if(s[0]!=='{'){const i=s.indexOf('{');if(i<0)return null;s=s.slice(i)}
-  try{return JSON.parse(s)}catch(e){const j=s.lastIndexOf('}');if(j>0){try{return JSON.parse(s.slice(0,j+1))}catch(e2){}}return null}
-}
 const str=v=>typeof v==='string'?v.trim():'';
 const arr=v=>Array.isArray(v)?v.map(x=>String(x).trim()).filter(Boolean):(typeof v==='string'?splitList(v):[]);
-function take(p,obj){
-  if(!obj||typeof obj!=='object')return false;
-  if(obj.type==='seen'){const ui=S.lang;p.seen={product:{[ui]:str(obj.product)},items:{[ui]:arr(obj.items).slice(0,6)}};return true}
-  if(obj.type==='listing'&&LANGS.includes(obj.lang)){
-    const o={};
-    for(const k of KEYS){if(obj[k]==null)continue;o[k]=['features','keywords','hashtags'].includes(k)?arr(obj[k]):str(obj[k]).replace(/\\n/g,'\n')}
-    if(o.hashtags)o.hashtags=o.hashtags.map(h=>h[0]==='#'?h:'#'+h.replace(/\s+/g,'_'));
-    p.out[obj.lang]=o;if(!p.out[p.tab])p.tab=obj.lang;return true;
-  }
-  return false;
+function take(p,lang,j,ui){
+  const L=j&&j.listing;if(!L||typeof L!=='object')return false;
+  const o={};
+  for(const k of KEYS){if(L[k]==null)continue;o[k]=['features','keywords','hashtags'].includes(k)?arr(L[k]):str(L[k])}
+  if(!o.title&&!o.description)return false;
+  if(o.hashtags)o.hashtags=o.hashtags.map(h=>h[0]==='#'?h:'#'+h.replace(/\s+/g,'_'));
+  p.out[lang]=o;
+  if(!p.seen&&j.seen)p.seen={product:{[ui]:str(j.seen.product)},items:{[ui]:arr(j.seen.items).slice(0,6)}};
+  return true;
+}
+// At most MAX_PARALLEL requests run at a time on the page; the others wait their turn.
+const pool={n:0,q:[]};
+function slot(signal){return new Promise((res,rej)=>{
+  const go=()=>{signal.removeEventListener('abort',quit);pool.n++;res()};
+  const quit=()=>{pool.q=pool.q.filter(f=>f!==go);rej(new DOMException('Aborted','AbortError'))};
+  if(signal.aborted)return quit();
+  if(pool.n<MAX_PARALLEL)go();else{pool.q.push(go);signal.addEventListener('abort',quit,{once:true})}
+})}
+function release(){pool.n--;const next=pool.q.shift();if(next)next()}
+function settings(p){return {ui:S.lang,tone:S.tone,len:S.len,features:S.inc.features?'1':'0',seo:S.inc.seo?'1':'0',social:S.inc.social?'1':'0',quality:S.q,notes:p.notes.trim().slice(0,600)}}
+// One photo and one language per request. The server builds the prompt and calls the Claude API.
+async function request(p,lang,o,signal){
+  await slot(signal);
+  try{
+    const fd=new FormData();
+    fd.append('image',p.file,p.file.type==='image/png'?'photo.png':'photo.jpg');
+    fd.append('lang',lang);for(const k in o)fd.append(k,o[k]);
+    let r,j=null;
+    try{r=await fetch('api/generate.php',{method:'POST',body:fd,signal});j=await r.json().catch(()=>null)}
+    catch(e){if(signal.aborted)throw e;return {error:'network'}}
+    if(signal.aborted)throw new DOMException('Aborted','AbortError');
+    if(r.ok&&j&&j.listing)return j;
+    return {error:j&&typeof j.error==='string'?j.error:r.status===429?'rate_limited':r.status>=500?'busy':'other',retry:(j&&+j.retry_after)||+r.headers.get('Retry-After')||0};
+  }finally{release()}
 }
 function rasterize(){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{try{const c=document.createElement('canvas');c.width=600;c.height=600;c.getContext('2d').drawImage(img,0,0,600,600);c.toBlob(b=>b?res(b):rej(new Error('png')),'image/png')}catch(e){rej(e)}};img.onerror=()=>rej(new Error('img'));img.src=EX_URL})}
 
-async function generate(p){
-  if(p.status==='run')return;
-  await ready;
-  if(!sample){p.status='err';p.err='off';renderPlate(p);return}
-  if(!imgLimits){p.status='err';p.err='images_unavailable';renderPlate(p);return}
+async function generate(p,only){
+  const jobs0=p.jobs||{};
+  if(only?(jobs0[only]&&jobs0[only].st==='run'):p.status==='run')return null;
   if(!selLangs().length){S.langs.ar=true;save();renderOpts()}
-  if(!p.file&&p.example){try{p.file=await rasterize()}catch(e){p.status='err';p.err='example';renderPlate(p);return}}
-  p.status='run';p.err='';p.ctl=new AbortController();p.t0=Date.now();p._n=0;
-  const keepOut=p.out;p.out={};p.seen=null;renderPlate(p);
-  p.timer=setInterval(()=>{const el=document.querySelector('#'+p.id+' .secs');if(el)el.textContent=t('secs')(Math.round((Date.now()-p.t0)/1000))},1000);
-  let text='';
-  const eat=final=>{const lines=text.split('\n');const upto=final?lines.length:lines.length-1;let changed=false;for(let i=p._n;i<upto;i++){if(take(p,parseLine(lines[i])))changed=true}p._n=Math.max(p._n,upto);if(changed)renderPlate(p)};
-  try{
-    const r=await sample(promptFor(p),{images:[p.file],signal:p.ctl.signal,cache:false,modelTier:S.q==='fast'?'quick':'default',onText:({text:x})=>{text=x;eat(false)}});
-    text=r.text;eat(true);
-    if(!Object.keys(p.out).length){
-      const objs=(text.match(/\{[^\n]*\}/g)||[]).map(parseLine);objs.forEach(o=>take(p,o));
-    }
-    if(Object.keys(p.out).length){p.status='done'}else{p.status='err';p.err='format';p.out=keepOut}
-  }catch(e){
-    const c=e&&e.code;
-    if(c==='cancelled'){p.status=Object.keys(p.out).length?'done':(Object.keys(keepOut).length?'done':'idle');if(!Object.keys(p.out).length)p.out=keepOut}
-    else{p.status='err';p.err=['not_granted','rate_limited','session_expired','refused','image_rejected','images_unavailable'].includes(c)?c:(['sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)?'off':'other');if(!Object.keys(p.out).length)p.out=keepOut}
-  }
-  clearInterval(p.timer);p.ctl=null;
-  if(!p.out[p.tab])p.tab=Object.keys(p.out)[0]||'ar';
+  if(!p.file&&p.example){try{p.file=await rasterize()}catch(e){p.status='err';p.err='example';renderPlate(p);return {st:p.status,errs:['example']}}}
+  const langs=only?[only]:selLangs(),o=settings(p);
+  if(p.status!=='run'){p.ctl=new AbortController();p.t0=Date.now();p.stopped=false}
+  if(!only){p.keepOut=p.out;p.out={};p.seen=null;p.jobs={};p.err='';p.picked=false;if(!langs.includes(p.tab))p.tab=langs[0]}
+  for(const l of langs)p.jobs[l]={st:'run',prev:only?jobs0[l]:null};
+  p.status='run';
+  if(!p.timer)p.timer=setInterval(()=>{const el=document.querySelector('#'+p.id+' .secs');if(el)el.textContent=t('secs')(Math.round((Date.now()-p.t0)/1000))},1000);
   renderPlate(p);renderBar();
-  return p.status;
+  const ctl=p.ctl,errs=[];
+  await Promise.all(langs.map(async l=>{
+    let j;
+    try{j=await request(p,l,o,ctl.signal)}
+    catch(e){if(ctl.signal.aborted){const prev=p.jobs[l]&&p.jobs[l].prev;if(prev)p.jobs[l]=prev;else delete p.jobs[l];return}j={error:'other'}}
+    if(j.error){errs.push(j.error);p.jobs[l]={st:'err',err:j.error,retry:j.retry};if(j.error==='paused'&&aiState!=='off'){aiState='off';renderStatus()}}
+    else if(take(p,l,j,o.ui)){p.jobs[l]={st:'done'};if(aiState!=='on'){aiState='on';renderStatus()}if(!p.picked&&!p.out[p.tab])p.tab=l}
+    else{errs.push('format');p.jobs[l]={st:'err',err:'format'}}
+    renderPlate(p);
+  }));
+  settle(p);
+  return {st:p.status,errs};
+}
+// Runs when a product's last request ends: keeps what arrived, or restores the old listing if nothing did.
+function settle(p){
+  const jobs=p.jobs||{};
+  if(Object.values(jobs).some(j=>j.st==='run'))return;
+  clearInterval(p.timer);p.timer=null;p.ctl=null;
+  const got=Object.keys(p.out).length;
+  if(got){p.status='done';for(const l in jobs)if(jobs[l].st!=='err')delete jobs[l]}
+  else if(p.stopped){p.out=p.keepOut||{};p.jobs={};p.status=Object.keys(p.out).length?'done':'idle'}
+  else{const e=Object.values(jobs).find(j=>j.st==='err')||{};p.status='err';p.err=e.err||'other';p.retry=e.retry||0;p.out=p.keepOut||{};p.jobs={}}
+  renderPlate(p);renderBar();
+}
+function errText(code,retry){
+  const E=T[S.lang].err;
+  if(code==='rate_limited'&&retry>90){
+    const d=new Date(Date.now()+retry*1000),at=d.toLocaleTimeString(S.lang==='ar'?'ar-u-nu-latn':'en',{hour:'numeric',minute:'2-digit'});
+    return d.toDateString()===new Date().toDateString()?E.rateAt(at):E.rateTomorrow(at);
+  }
+  if(code==='too_large')return E.big;
+  return typeof E[code]==='string'?E[code]:E.other;
 }
 
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=src})}
@@ -305,7 +342,7 @@ async function toJpeg(file){
     const img=await loadImg(src);
     const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height;
     if(!w0||!h0)throw new Error('size');
-    const k=Math.min(1,1600/Math.max(w0,h0)),w=Math.max(1,Math.round(w0*k)),h=Math.max(1,Math.round(h0*k));
+    const k=Math.min(1,MAX_SIDE/Math.max(w0,h0)),w=Math.max(1,Math.round(w0*k)),h=Math.max(1,Math.round(h0*k));
     const c=document.createElement('canvas');c.width=w;c.height=h;
     const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(img,0,0,w,h);
     const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));
@@ -323,7 +360,7 @@ async function addFiles(list){
     const looksImage=(f.type||'').startsWith('image/')||/\.(jpe?g|png|webp|gif|heic|heif|bmp|avif)$/i.test(f.name||'')||!f.type;
     if(!looksImage){notImg=true;continue}
     const p={id:'p'+(++seq)+Date.now().toString(36),example:false,url:'',file:null,notes:'',status:'idle',tab:'ar',seen:null,out:{}};
-    try{const jpg=await toJpeg(f);p.file=jpg;p.url=URL.createObjectURL(jpg);if(imgLimits&&imgLimits.maxInputBytes&&jpg.size>imgLimits.maxInputBytes){p.status='err';p.err='big'}}
+    try{const jpg=await toJpeg(f);p.file=jpg;p.url=URL.createObjectURL(jpg);if(jpg.size>MAX_BYTES){p.status='err';p.err='big'}}
     catch(e){if(!(f.type||'').startsWith('image/')&&!/\.(jpe?g|png|webp|gif|heic|heif|bmp|avif)$/i.test(f.name||'')){notImg=true;continue}p.status='err';p.err='type';p.url=EX_URL.replace('#f3e6ea','#d9e2ea')}
     products.push(p);room--;added++;
   }
@@ -341,22 +378,38 @@ function fieldsHTML(p){
     return '<div class="f'+(k==='title'?' t':'')+'"><div class="fh"><b>'+L.fields[k]+'</b>'+cnt+'<button type="button" class="cp" data-copy="'+k+'">'+L.copy+'</button></div><textarea rows="1" data-k="'+k+'" dir="'+(p.tab==='ar'?'rtl':'ltr')+'" lang="'+p.tab+'">'+esc(v)+'</textarea></div>';
   }).join('');
 }
+function tabsOf(p){const j=p.jobs||{};return LANGS.filter(l=>p.out[l]||j[l])}
+function waitHTML(p,bar){const L=T[S.lang];return '<div class="wait"><p>'+L.analyzing+' <span class="secs">'+L.secs(Math.round((Date.now()-(p.t0||Date.now()))/1000))+'</span></p>'+(bar?'<div class="prog"><i></i></div>':'')+'</div>'}
+function tabBody(p){
+  const j=(p.jobs||{})[p.tab];
+  if(p.out[p.tab])return fieldsHTML(p);
+  if(j&&j.st==='err')return '<div class="terr"><p class="err">'+esc(errText(j.err,j.retry))+'</p><button type="button" class="ghost" data-retry="'+p.tab+'">'+T[S.lang].retry+'</button></div>';
+  return waitHTML(p,false);
+}
 function plateHTML(p){
-  const L=T[S.lang];
+  const L=T[S.lang],jobs=p.jobs||{};
   const seen=p.seen?'<div class="seen"><span>'+L.seen+'</span>'+((p.seen.items[S.lang]||p.seen.items.ar||p.seen.items.en||[]).map(x=>'<i>'+esc(x)+'</i>').join(''))+'</div>':'';
-  const langs=Object.keys(p.out).filter(l=>LANGS.includes(l)).sort((a,b)=>LANGS.indexOf(a)-LANGS.indexOf(b));
+  const langs=tabsOf(p),has=Object.keys(p.out).length;
+  if(langs.length&&!langs.includes(p.tab))p.tab=langs.find(l=>p.out[l])||langs[0];
   let out='';
-  if(p.status==='run'&&!langs.length)out='<div class="wait"><p>'+L.analyzing+' <span class="secs">'+L.secs(Math.round((Date.now()-(p.t0||Date.now()))/1000))+'</span></p><div class="prog"><i></i></div></div>';
+  if(p.status==='run'&&!langs.some(l=>p.out[l]||jobs[l].st==='err'))out=waitHTML(p,true);
   else if(langs.length){
-    out='<div class="ltabs" role="tablist">'+langs.map(l=>'<button type="button" role="tab" data-tab="'+l+'" aria-selected="'+(l===p.tab)+'">'+L.lname[l]+'</button>').join('')+'<button type="button" class="ghost" data-copyall>'+L.copyAll+'</button></div>'+(p.status==='run'?'<div class="prog"><i></i></div>':'')+fieldsHTML(p);
+    out='<div class="ltabs" role="tablist">'+langs.map(l=>{const st=p.out[l]?'':jobs[l].st;return '<button type="button" role="tab" data-tab="'+l+'"'+(st==='run'||st==='err'?' data-st="'+st+'"':'')+' aria-selected="'+(l===p.tab)+'">'+L.lname[l]+'</button>'}).join('')+(p.out[p.tab]?'<button type="button" class="ghost" data-copyall>'+L.copyAll+'</button>':'')+'</div>'+(p.status==='run'?'<div class="prog"><i></i></div>':'')+tabBody(p);
   } else if(p.status!=='err')out='<p class="idle">'+L.idle+'</p>';
-  if(p.status==='err')out+='<p class="err">'+esc(L.err[p.err]||L.err.other)+'</p>';
-  const btn=p.status==='run'?'<button type="button" class="prim" data-stop>'+L.stop+'</button>':'<button type="button" class="prim" data-gen'+(p.err==='type'||p.err==='big'?' disabled':'')+'>'+(langs.length?L.regen:L.gen)+'</button>';
-  return '<article class="plate" id="'+p.id+'"><div class="side"><div class="ph"><img src="'+esc(p.url)+'" alt="">'+(p.example?'<span class="tag">'+L.example+'</span>':'')+'</div><label for="n-'+p.id+'">'+L.notesL+'</label><textarea class="notes" id="n-'+p.id+'" dir="auto" placeholder="'+esc(L.notesPh)+'">'+esc(p.notes)+'</textarea><div class="pb">'+btn+'<button type="button" class="ghost" data-del>'+L.del+'</button></div>'+seen+'</div><div class="out">'+out+'</div></article>';
+  if(p.status==='err')out+='<p class="err">'+esc(errText(p.err,p.retry))+'</p>';
+  const btn=p.status==='run'?'<button type="button" class="prim" data-stop>'+L.stop+'</button>':'<button type="button" class="prim" data-gen'+(p.err==='type'||p.err==='big'?' disabled':'')+'>'+(has?L.regen:L.gen)+'</button>';
+  return '<article class="plate" id="'+p.id+'"><div class="side"><div class="ph"><img src="'+esc(p.url)+'" alt="">'+(p.example?'<span class="tag">'+L.example+'</span>':'')+'</div><label for="n-'+p.id+'">'+L.notesL+'</label><textarea class="notes" id="n-'+p.id+'" dir="auto" maxlength="600" placeholder="'+esc(L.notesPh)+'">'+esc(p.notes)+'</textarea><div class="pb">'+btn+'<button type="button" class="ghost" data-del>'+L.del+'</button></div>'+seen+'</div><div class="out">'+out+'</div></article>';
 }
 function fit(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'}
 function fitAll(root){(root||document).querySelectorAll('.f textarea').forEach(fit)}
-function renderPlate(p){const el=document.getElementById(p.id);if(!el){renderPlates();return}el.outerHTML=plateHTML(p);fitAll(document.getElementById(p.id))}
+function renderPlate(p){
+  if(!products.includes(p))return;
+  const el=document.getElementById(p.id);if(!el){renderPlates();return}
+  const a=document.activeElement,f=a&&a.tagName==='TEXTAREA'&&el.contains(a)?{sel:a.classList.contains('notes')?'.notes':'textarea[data-k="'+a.dataset.k+'"]',tab:a.classList.contains('notes')?null:a.getAttribute('lang'),s:a.selectionStart,e:a.selectionEnd}:null;
+  el.outerHTML=plateHTML(p);
+  const n=document.getElementById(p.id);fitAll(n);
+  if(f&&(f.tab===null||f.tab===p.tab)){const x=n.querySelector(f.sel);if(x){x.focus({preventScroll:true});try{x.setSelectionRange(f.s,f.e)}catch(e){}}}
+}
 function renderPlates(){const box=$('#plates');box.innerHTML=products.length?products.map(plateHTML).join(''):'<div class="empty">'+t('empty')+'</div>';fitAll(box)}
 function renderBar(){
   $('#listH').textContent=t('list')(products.length);
@@ -365,7 +418,7 @@ function renderBar(){
 }
 function renderStatus(){
   const d=$('#dot');d.className='dot'+(aiState==='on'?' on':aiState==='wait'?'':' off');
-  $('#aiTxt').textContent=aiState==='on'?t('aiOn'):aiState==='wait'?t('aiWait'):aiState==='noimg'?t('aiNoImg'):t('aiOff');
+  $('#aiTxt').textContent=aiState==='on'?t('aiOn'):aiState==='wait'?t('aiWait'):aiState==='down'?t('aiDown'):t('aiOff');
 }
 function renderOpts(){
   const L=T[S.lang];
@@ -410,9 +463,10 @@ $('#opts').addEventListener('click',e=>{
 $('#plates').addEventListener('click',e=>{
   const plate=e.target.closest('.plate');if(!plate)return;const p=products.find(x=>x.id===plate.id);if(!p)return;
   if(e.target.closest('[data-gen]')){generate(p);return}
-  if(e.target.closest('[data-stop]')){if(p.ctl)p.ctl.abort();return}
-  if(e.target.closest('[data-del]')){if(p.ctl)p.ctl.abort();clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);products=products.filter(x=>x!==p);renderPlates();renderBar();return}
-  const tb=e.target.closest('[data-tab]');if(tb){p.tab=tb.dataset.tab;renderPlate(p);return}
+  const rt=e.target.closest('[data-retry]');if(rt){generate(p,rt.dataset.retry);return}
+  if(e.target.closest('[data-stop]')){if(p.ctl){p.stopped=true;p.ctl.abort()}return}
+  if(e.target.closest('[data-del]')){if(p.ctl){p.stopped=true;p.ctl.abort()}clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);products=products.filter(x=>x!==p);renderPlates();renderBar();return}
+  const tb=e.target.closest('[data-tab]');if(tb){p.tab=tb.dataset.tab;p.picked=true;renderPlate(p);return}
   const cp=e.target.closest('[data-copy]');if(cp){const ta=plate.querySelector('textarea[data-k="'+cp.dataset.copy+'"]');copyText(ta?ta.value:'',cp);return}
   const ca=e.target.closest('[data-copyall]');if(ca){copyText(allText(p),ca)}
 });
@@ -429,16 +483,17 @@ $('#genAll').addEventListener('click',async()=>{
   const list=todo.length?todo:products.filter(p=>!p.example&&p.status!=='run'&&p.err!=='type'&&p.err!=='big');
   if(!list.length)return;
   batch={i:0,n:list.length};
-  for(const p of list){if(!products.includes(p))continue;batch.i++;renderBar();const st=await generate(p);if(st==='err'&&['not_granted','rate_limited','session_expired','off','images_unavailable'].includes(p.err))break}
+  for(const p of list){if(!products.includes(p))continue;batch.i++;renderBar();const r=await generate(p);if(r&&r.errs.some(c=>c==='rate_limited'||c==='paused'))break}
   batch=null;renderBar();
 });
 $('#copyCsv').addEventListener('click',async e=>{const c=csv();if(!c){flash(t('noData'),true);return}if(await copyText(c,null))flash(t('csvCopied'))});
-$('#dlCsv').addEventListener('click',async()=>{
+$('#dlCsv').addEventListener('click',()=>{
   const c=csv();if(!c){flash(t('noData'),true);return}
-  if(!downloads)return;
-  try{await downloads.save({filename:'product-listings.csv',data:'﻿'+c});flash(t('saved'))}catch(e){if(e&&e.code!=='declined')flash(t('err').other,true)}
+  const url=URL.createObjectURL(new Blob(['\ufeff'+c],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download='product-listings.csv';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);flash(t('saved'));
 });
-$('#clearAll').addEventListener('click',()=>{products.forEach(p=>{if(p.ctl)p.ctl.abort();clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url)});products=[];renderPlates();renderBar()});
+$('#clearAll').addEventListener('click',()=>{products.forEach(p=>{if(p.ctl){p.stopped=true;p.ctl.abort()}clearInterval(p.timer);if(!p.example&&p.url.startsWith('blob:'))URL.revokeObjectURL(p.url)});products=[];renderPlates();renderBar()});
 $('#langBtn').addEventListener('click',()=>{S.lang=S.lang==='ar'?'en':'ar';save();applyLang()});
 window.addEventListener('resize',()=>fitAll());
 applyLang();
