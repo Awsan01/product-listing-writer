@@ -128,7 +128,7 @@ get health.php
 expect 200 "health with a config and a key" '"ok":true'
 
 echo "Generate"
-post -F image=@"$PHOTO" "${FIELDS[@]}" --form-string 'notes=حقيبة جلد بني'
+post -F image=@"$PHOTO" "${FIELDS[@]}" --form-string 'notes=عطر رجالي 100 مل'
 expect 200 "valid photo returns a listing" '"listing"'
 jcheck '$d["seen"]["product"] !== "" && count($d["seen"]["items"]) >= 3' 'response has "seen" with product and items'
 jcheck 'array_keys($d["listing"]) === ["title","short","description","features","keywords","meta","caption","hashtags"]' 'all requested fields, in order'
@@ -139,7 +139,7 @@ M="$WORK/mock/last-request.json"
 jcheck '$d["model"] === "claude-sonnet-5-5" && $d["max_tokens"] === 1500' 'quality=best uses the configured model and max_tokens 1500' "$M"
 jcheck '$d["thinking"] === ["type" => "between_tools"] && $d["effort"] === "low"' 'claude-sonnet-5-5 runs with thinking off (between_tools) at low effort' "$M"
 jcheck '$d["api_key"] === "test-key-not-real" && $d["anthropic_version"] !== "" && $d["workspace_id"] === "wrkspc_smoke"' 'API key, version and workspace headers are sent' "$M"
-jcheck '$d["lang"] === "ar" && $d["ui"] === "ar" && str_contains($d["prompt"], "Never invent sizes, materials, ingredients") && str_contains($d["prompt"], "«حقيبة جلد بني»")' 'prompt is built on the server with the rules and the notes' "$M"
+jcheck '$d["lang"] === "ar" && $d["ui"] === "ar" && str_contains($d["prompt"], "Never invent sizes, materials, ingredients") && str_contains($d["prompt"], "«عطر رجالي 100 مل»")' 'prompt is built on the server with the rules and the notes' "$M"
 jcheck 'strlen($d["metadata_user_id"]) === 32 && !str_contains(json_encode($d), "127.0.0.1")' 'visitor is sent as an anonymous hash, never the IP' "$M"
 
 post -F image=@"$PHOTO" -F lang=en -F ui=en -F tone=friendly -F len=short -F features=0 -F seo=0 -F social=1 -F quality=fast
@@ -199,7 +199,7 @@ if [[ -f "$LOG" ]]; then
   [[ "$(head -1 "$LOG")" == "time,model,language,input_tokens,output_tokens,status" ]] && ok "usage log has the header" || bad "usage log header"
   grep -q ',claude-sonnet-5-5,ar,[1-9][0-9]*,[1-9][0-9]*,ok$' "$LOG" && ok "usage log records model, language, tokens and status" || bad "usage log content"
   grep -q ',ok_cut$' "$LOG" && ok "usage log marks replies cut off at max_tokens (ok_cut)" || bad "ok_cut missing from the usage log"
-  if grep -q -e 'حقيبة' -e 'mock:' -e '127.0.0.1' "$LOG"; then bad "usage log contains notes or an IP"; else ok "usage log has no notes and no IPs"; fi
+  if grep -q -e 'عطر رجالي' -e 'mock:' -e '127.0.0.1' "$LOG"; then bad "usage log contains notes or an IP"; else ok "usage log has no notes and no IPs"; fi
   MODE="$(stat -c '%a' "$WORK/storage" 2>/dev/null || stat -f '%Lp' "$WORK/storage")"
   [[ "$MODE" == "700" ]] && ok "storage folder is created with 0700" || bad "storage folder mode is $MODE"
   [[ -z "$(ls "$WORK/storage" | grep -v -E '^(rl-ip-[0-9a-f]{32}\.json|rl-site-[0-9-]+\.txt|usage-[0-9-]+\.csv)$')" ]] && ok "no photos are stored" || bad "unexpected files in storage: $(ls "$WORK/storage")"

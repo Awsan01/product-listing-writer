@@ -135,42 +135,43 @@ if (str_contains($prompt, 'mock:refusal')) {
         'usage' => ['input_tokens' => $usage['input_tokens'], 'output_tokens' => 0]]);
 }
 
-// Canned listing for the brown leather travel bag in tests/fixtures/leather-bag.jpg. A few values are messy
-// on purpose (spaces, a hashtag without #, a sixth feature, a literal "\n") so the tests can see the server sanitize them.
+// Canned listing for the perfume in tests/fixtures/blue-spirit.webp, using only what the photo and its labels show.
+// A few values are messy on purpose (spaces, a hashtag without #, a sixth feature, a literal "\n") so the tests
+// can see the server sanitize them.
 $seen = [
-    'ar' => ['product' => 'حقيبة سفر جلدية بنية', 'items' => ['حقيبة جلد بني', 'مقبضان علويان', 'حزام كتف طويل', 'جيبان أماميان', 'أبازيم معدنية']],
-    'en' => ['product' => 'Brown leather travel bag', 'items' => ['Brown leather bag', 'Two top handles', 'Long shoulder strap', 'Two front pockets', 'Metal buckles']],
+    'ar' => ['product' => 'عطر رجالي Blue Spirit من House of Morais', 'items' => ['زجاجة زرقاء بنقوش بيضاء', 'غطاء شفاف مربع', 'علبة سوداء', 'أو دو بارفان 100 مل', 'بخاخ']],
+    'en' => ['product' => 'House of Morais Blue Spirit men’s perfume', 'items' => ['Blue bottle with a white pattern', 'Clear square cap', 'Black box', '100 ml eau de parfum', 'Spray']],
 ];
 $listings = [
     'ar' => [
-        'title' => '  حقيبة سفر جلدية بنية بحزام كتف وجيبين أماميين  ',
-        'short' => 'حقيبة جلدية بنية بمقبضين علويين وحزام كتف طويل وجيبين أماميين بأغطية.',
-        'description' => "احمل أغراضك بأناقة مع هذه الحقيبة الجلدية البنية بلونها الدافئ وطابعها الكلاسيكي، إذ تمنحها الخياطة الظاهرة والمسامير النحاسية والأبازيم المعدنية مظهراً متيناً وجذاباً.\\n\\nيسهّل المقبضان العلويان حملها باليد، ويترك حزام الكتف الطويل يديك حرتين أثناء التنقل، فيما يحفظ الجيبان الأماميان أغراضك الصغيرة في متناولك، لتكون خياراً مناسباً لرحلات نهاية الأسبوع والنادي والسفر.",
-        'features' => ['• جلد بني بخياطة ظاهرة', 'مقبضان علويان للحمل باليد', 'حزام كتف طويل بأبازيم معدنية', 'جيبان أماميان بأغطية', 'تفاصيل من المسامير النحاسية', 'ميزة سادسة للاختبار'],
-        'keywords' => ['حقيبة جلد', 'حقيبة سفر جلد', 'حقيبة جلد بني', 'شنطة سفر', 'حقيبة رياضية جلد', 'حقيبة نهاية الأسبوع', 'حقيبة بحزام كتف', 'حقيبة جلد كلاسيكية', 'حقيبة جلد'],
-        'meta' => 'حقيبة سفر جلدية بنية بمقبضين وحزام كتف وجيبين أماميين، بتصميم كلاسيكي يناسب رحلات نهاية الأسبوع والسفر.',
-        'caption' => "جاهز لرحلة نهاية الأسبوع؟ 🧳\nحقيبتك الجلدية البنية بانتظارك، اطلبها الآن.",
-        'hashtags' => ['#حقيبة_جلد', 'حقائب سفر', '#شنط_جلد', '#سفر', '#هدايا'],
+        'title' => '  عطر Blue Spirit للرجال من House of Morais – أو دو بارفان 100 مل  ',
+        'short' => 'عطر رجالي بتركيز أو دو بارفان في زجاجة زرقاء مزخرفة بغطاء شفاف مربع، داخل علبة سوداء أنيقة.',
+        'description' => "عطر Blue Spirit من House of Morais بتركيز أو دو بارفان، مخصص للرجال ويأتي بتصميم عصري أنيق. زجاجته المربعة بلون أزرق تزينها نقوش بيضاء، مع طوق فضي وغطاء شفاف مربع يعكس الضوء.\\n\\nيأتي بحجم 100 مل مع بخاخ، داخل علبة سوداء فاخرة بملصق أبيض، ليكون هدية جاهزة أو إضافة مميزة إلى مجموعتك. خيار واثق للاستخدام اليومي وللسهرات.",
+        'features' => ['• أو دو بارفان للرجال', 'الحجم: 100 مل مع بخاخ', 'زجاجة مربعة زرقاء بنقوش بيضاء', 'غطاء شفاف مربع وطوق فضي', 'علبة سوداء بملصق أبيض', 'ميزة سادسة للاختبار'],
+        'keywords' => ['عطر رجالي', 'عطر Blue Spirit', 'عطور House of Morais', 'أو دو بارفان رجالي', 'عطر 100 مل', 'عطر هدية للرجال', 'عطور رجالية فاخرة', 'عطر بزجاجة زرقاء', 'عطر رجالي'],
+        'meta' => 'عطر Blue Spirit للرجال من House of Morais، أو دو بارفان 100 مل بخاخ في زجاجة زرقاء مزخرفة وعلبة هدايا سوداء.',
+        'caption' => "حضور يلفت الأنظار مع Blue Spirit 💙\nعطر رجالي من House of Morais، اطلبه الآن.",
+        'hashtags' => ['#عطور_رجالية', 'عطر رجالي', '#بلو_سبيريت', '#هدايا_رجالية', '#عطور'],
     ],
     'en' => [
-        'title' => 'Brown Leather Duffel Bag with Front Pockets',
-        'short' => '  A brown leather duffel bag with two top handles, a long shoulder strap and two front pockets.',
-        'description' => "Carry your essentials in style with this brown leather duffel bag. The warm, lived-in leather, visible stitching, brass studs and metal buckles give it a classic, rugged look.\n\nTwo rolled top handles make it easy to carry by hand, and the long shoulder strap keeps your hands free on the move. Two front pockets with snap flaps keep small things within reach, which makes it a natural pick for weekend trips, the gym or travel.",
-        'features' => ['Brown leather with visible stitching', 'Two rolled top handles', 'Long shoulder strap with metal buckles', 'Two front pockets with snap flaps', 'Brass stud and buckle details', 'A sixth feature for testing'],
-        'keywords' => ['leather duffel bag', 'brown leather bag', 'leather travel bag', 'weekender bag', 'leather gym bag', 'duffel bag with shoulder strap', 'vintage leather bag', 'leather holdall'],
-        'meta' => 'Brown leather duffel bag with two top handles, a long shoulder strap and two front pockets. A classic bag for weekend trips and travel.',
-        'caption' => "Packed and ready for the weekend 🧳\nBrown leather, two handles, one strap. Order yours today.",
-        'hashtags' => ['#leatherbag', 'duffel bag', '#weekenderbag', '#travelbag', '#leathergoods'],
+        'title' => 'House of Morais Blue Spirit Eau de Parfum for Men – 100 ml',
+        'short' => '  A men’s eau de parfum in a blue patterned glass bottle with a clear square cap, presented in a black box.',
+        'description' => "Blue Spirit by House of Morais is an eau de parfum made for men, with a clean, modern look. The square glass bottle has a blue tint with a white splash pattern, a silver collar and a clear, chunky square cap that catches the light.\n\nIt comes in 100 ml with a natural spray, inside a sleek black box with a white label, ready to give as a gift or to keep on your shelf. A confident choice for every day and for evenings out.",
+        'features' => ['Eau de parfum for men', '100 ml (3.4 fl oz) natural spray', 'Square glass bottle with a blue and white pattern', 'Clear square cap and silver collar', 'Black gift box with a white label', 'A sixth feature for testing'],
+        'keywords' => ['men’s perfume', 'House of Morais Blue Spirit', 'Blue Spirit perfume', 'eau de parfum for men', '100 ml perfume', 'men’s fragrance gift', 'perfume gift for men', 'blue perfume bottle'],
+        'meta' => 'House of Morais Blue Spirit eau de parfum for men, a 100 ml spray in a blue patterned bottle with a black gift box.',
+        'caption' => "Blue Spirit, in a bottle made to stand out 💙\nHouse of Morais eau de parfum for men. Order yours today.",
+        'hashtags' => ['#mensperfume', 'blue spirit', '#houseofmorais', '#eaudeparfum', '#perfumegift'],
     ],
     'tr' => [
-        'title' => 'Ön Cepli Kahverengi Deri Seyahat Çantası',
-        'short' => 'İki üst sapı, uzun omuz askısı ve kapaklı iki ön cebi olan kahverengi deri seyahat çantası.',
-        'description' => "Bu kahverengi deri seyahat çantasıyla eşyalarınızı şıklıkla taşıyın. Sıcak tonlu deri, görünür dikişler, pirinç perçinler ve metal tokalar çantaya klasik ve sağlam bir görünüm kazandırıyor.\n\nİki üst sap elde taşımayı kolaylaştırır, uzun omuz askısı ise yolda ellerinizi serbest bırakır. Kapaklı iki ön cep küçük eşyaları el altında tutar; hafta sonu kaçamakları, spor salonu ve seyahatler için doğal bir seçim.",
-        'features' => ['Görünür dikişli kahverengi deri', 'İki üst taşıma sapı', 'Metal tokalı uzun omuz askısı', 'Kapaklı iki ön cep', 'Pirinç perçin ve toka detayları', 'Test için altıncı özellik'],
-        'keywords' => ['deri seyahat çantası', 'kahverengi deri çanta', 'deri spor çantası', 'hafta sonu çantası', 'omuz askılı çanta', 'vintage deri çanta', 'deri valiz çantası', 'deri el çantası'],
-        'meta' => 'İki saplı, omuz askılı ve iki ön cepli kahverengi deri seyahat çantası; hafta sonu kaçamakları ve seyahatler için klasik bir tasarım.',
-        'caption' => "Hafta sonuna hazır mısınız? 🧳\nKahverengi deri çantanız sizi bekliyor, hemen sipariş verin.",
-        'hashtags' => ['#deriçanta', 'seyahat çantası', '#haftasonu', '#seyahat', '#deri'],
+        'title' => 'House of Morais Blue Spirit Erkek Parfümü EDP 100 ml',
+        'short' => 'Şeffaf kare kapaklı, mavi desenli cam şişede ve siyah kutusunda sunulan bir erkek eau de parfum.',
+        'description' => "House of Morais Blue Spirit, erkekler için hazırlanmış bir eau de parfum. Mavi tonlu kare cam şişesi beyaz desenlerle süslenmiş; gümüş rengi boyun halkası ve ışığı yansıtan şeffaf kare kapağıyla modern ve şık bir görünüm sunuyor.\n\n100 ml doğal sprey olarak, beyaz etiketli siyah bir kutu içinde gelir; hediye etmeye ya da koleksiyonunuza eklemeye hazır. Her gün ve özel akşamlar için kendinden emin bir seçim.",
+        'features' => ['Erkekler için eau de parfum', '100 ml (3.4 fl oz) doğal sprey', 'Mavi-beyaz desenli kare cam şişe', 'Şeffaf kare kapak ve gümüş halka', 'Beyaz etiketli siyah hediye kutusu', 'Test için altıncı özellik'],
+        'keywords' => ['erkek parfümü', 'House of Morais Blue Spirit', 'Blue Spirit parfüm', 'erkek eau de parfum', '100 ml parfüm', 'erkeğe hediye parfüm', 'lüks erkek parfümü', 'mavi şişe parfüm'],
+        'meta' => 'House of Morais Blue Spirit erkek eau de parfum; mavi desenli şişede ve siyah hediye kutusunda 100 ml sprey.',
+        'caption' => "Blue Spirit ile fark edilin 💙\nHouse of Morais erkek parfümü, hemen sipariş verin.",
+        'hashtags' => ['#erkekparfümü', 'blue spirit', '#houseofmorais', '#parfüm', '#hediye'],
     ],
 ];
 $listing = [];
