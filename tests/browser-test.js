@@ -28,20 +28,9 @@ function check(ok, label) {
   if (!ok) failures++;
 }
 
-// A product "photo" for the test: a green mug, 2400x1800 so the page has to shrink it.
-const MUG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="2400" height="1800">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f1e8"/><stop offset="1" stop-color="#eadfce"/></linearGradient>
-<linearGradient id="m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d7556"/><stop offset=".42" stop-color="#43b088"/><stop offset="1" stop-color="#17614a"/></linearGradient>
-<linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfa173"/><stop offset="1" stop-color="#9c7047"/></linearGradient></defs>
-<rect width="1200" height="900" fill="url(#bg)"/><rect y="640" width="1200" height="260" fill="#e4d4bf"/>
-<ellipse cx="600" cy="712" rx="340" ry="62" fill="url(#w)"/><ellipse cx="600" cy="700" rx="306" ry="46" fill="#bf8f61"/>
-<ellipse cx="600" cy="684" rx="200" ry="24" fill="#000" opacity=".16"/>
-<path d="M772 410q104 0 104 92t-104 92" fill="none" stroke="#258a64" stroke-width="38" stroke-linecap="round"/>
-<path d="M428 330h344v262q0 86-86 86H514q-86 0-86-86z" fill="url(#m)"/>
-<ellipse cx="600" cy="330" rx="172" ry="30" fill="#33a07a"/><ellipse cx="600" cy="333" rx="152" ry="21" fill="#5b3a22"/>
-<rect x="468" y="372" width="26" height="236" rx="13" fill="#fff" opacity=".33"/>
-<g fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity=".75"><path d="M548 280q-22-38 0-76t0-76"/><path d="M604 270q-22-38 0-76t0-76"/><path d="M660 280q-22-38 0-76t0-76"/></g>
-</svg>`;
+// The test photo: a real product (tests/fixtures/leather-bag.jpg, CC0), scaled up to 2400x1600 below
+// so the page has to shrink it to 1568 px before upload.
+const FIXTURE = path.join(__dirname, 'fixtures', 'leather-bag.jpg');
 
 function trackRequests(page) {
   const s = { posts: 0, inFlight: 0, max: 0 };
@@ -92,26 +81,27 @@ async function screenshots(browser, photo) {
   await page.waitForSelector('#dot.on');
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: path.join(SHOTS, 'desktop.png') });
-  const { plate, id } = await uploadAndGenerate(page, photo, 'Green ceramic mug');
+  const { plate, id } = await uploadAndGenerate(page, photo, 'Brown leather travel bag');
   await waitIdle(page, id);
   await plate.locator('[data-tab="en"]').click();
   await page.evaluate(() => { document.activeElement.blur(); document.getElementById('msg').textContent = ''; });
   await plate.screenshot({ path: path.join(SHOTS, 'listing.png') });
   await desk.close();
 
-  const phone = await browser.newContext({ ...devices['iPhone 13'] });
+  // Full iPhone 13 screen height, so the photo, what the assistant sees and the title fit in one shot.
+  const phone = await browser.newContext({ ...devices['iPhone 13'], viewport: { width: 390, height: 844 } });
   await phone.addInitScript(english);
   const mp = await phone.newPage();
   await mp.goto(APP);
   await mp.waitForSelector('#dot.on');
-  const r = await uploadAndGenerate(mp, photo, 'Green ceramic mug');
+  const r = await uploadAndGenerate(mp, photo, 'Brown leather travel bag');
   await waitIdle(mp, r.id);
   await r.plate.locator('[data-tab="en"]').click();
   await mp.evaluate((pid) => {
     document.activeElement.blur();
     document.getElementById('msg').textContent = '';
-    const tabs = document.querySelector('#' + pid + ' .ltabs');
-    window.scrollTo(0, tabs.getBoundingClientRect().top + window.scrollY - 300);
+    const plate = document.getElementById(pid);
+    window.scrollTo(0, plate.getBoundingClientRect().top + window.scrollY - 12);
   }, r.id);
   await mp.screenshot({ path: path.join(SHOTS, 'phone.png') });
   await phone.close();
@@ -120,11 +110,12 @@ async function screenshots(browser, photo) {
 (async () => {
   const browser = await chromium.launch({ proxy });
   try {
-    const photo = path.join(TMP, 'mug.jpg');
+    const photo = path.join(TMP, 'leather-bag-2400.jpg');
     {
-      const p = await browser.newPage({ viewport: { width: 2400, height: 1800 } });
-      await p.setContent('<body style="margin:0">' + MUG + '</body>');
-      await p.screenshot({ path: photo, type: 'jpeg', quality: 90 });
+      const p = await browser.newPage({ viewport: { width: 2400, height: 1600 } });
+      const src = 'data:image/jpeg;base64,' + fs.readFileSync(FIXTURE).toString('base64');
+      await p.setContent('<body style="margin:0"><img src="' + src + '" style="display:block;width:2400px;height:1600px"></body>');
+      await p.screenshot({ path: photo, type: 'jpeg', quality: 92 });
       await p.close();
     }
 
@@ -143,7 +134,7 @@ async function screenshots(browser, photo) {
     check(await page.isVisible('#dlCsv'), 'Download CSV button is always visible');
     check((await page.textContent('.sig')).trim() === 'Built by Awsan Khaled', 'footer line is shown');
 
-    const { plate, id } = await uploadAndGenerate(page, photo, 'كوب قهوة أخضر');
+    const { plate, id } = await uploadAndGenerate(page, photo, 'حقيبة سفر جلد بني');
     await waitIdle(page, id);
     check(req.posts === 3, 'one request per language: ' + req.posts);
     check(req.max <= 3, 'at most 3 requests at a time: ' + req.max);
@@ -165,16 +156,16 @@ async function screenshots(browser, photo) {
     check((await plate.locator('textarea[data-k="features"]').inputValue()).split('\n').length === 5, 'features are capped at 5 by the server');
 
     await plate.locator('[data-tab="en"]').click();
-    await plate.locator('textarea[data-k="title"]').fill('Edited green mug title');
+    await plate.locator('textarea[data-k="title"]').fill('Edited leather bag title');
     const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#dlCsv')]);
     const buf = fs.readFileSync(await dl.path());
     const csv = buf.toString('utf8');
     check(dl.suggestedFilename() === 'product-listings.csv', 'CSV downloads as product-listings.csv');
     check(buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf, 'CSV starts with a UTF-8 BOM (Excel shows Arabic correctly)');
-    check(csv.includes('Edited green mug title'), 'CSV contains the edited title');
-    check((csv.match(/"2 - كوب قهوة أخضر","(ar|en|tr)"/g) || []).length === 3, 'CSV has one row per language for the product');
+    check(csv.includes('Edited leather bag title'), 'CSV contains the edited title');
+    check((csv.match(/"2 - حقيبة سفر جلد بني","(ar|en|tr)"/g) || []).length === 3, 'CSV has one row per language for the product');
     await page.click('#copyCsv');
-    check((await page.evaluate(() => navigator.clipboard.readText())).includes('Edited green mug title'), 'Copy CSV still works');
+    check((await page.evaluate(() => navigator.clipboard.readText())).includes('Edited leather bag title'), 'Copy CSV still works');
 
     await page.click('#langBtn');
     check((await page.getAttribute('html', 'lang')) === 'en' && (await page.getAttribute('html', 'dir')) === 'ltr', 'interface switches to English, left to right');
@@ -188,19 +179,19 @@ async function screenshots(browser, photo) {
     await page2.goto(APP);
     await page2.waitForSelector('#dot.on');
     // Turkish fails (the mock answers 529 twice), the others arrive; retry fills Turkish.
-    const r1 = await uploadAndGenerate(page2, photo, 'mug mock:fail-tr');
+    const r1 = await uploadAndGenerate(page2, photo, 'bag mock:fail-tr');
     await waitIdle(page2, r1.id);
     check((await r1.plate.locator('[data-tab="tr"][data-st="err"]').count()) === 1, 'failed language is marked on its tab');
     check((await r1.plate.locator('[data-tab="ar"]:not([data-st])').count()) === 1, 'other languages still arrive');
     await r1.plate.locator('[data-tab="tr"]').click();
     check((await r1.plate.locator('.terr .err').textContent()) === 'The service is busy right now. Try again in a moment.', 'busy message shown on the failed tab');
-    await r1.plate.locator('textarea.notes').fill('mug');
+    await r1.plate.locator('textarea.notes').fill('bag');
     await r1.plate.locator('[data-retry="tr"]').click();
     await waitIdle(page2, r1.id);
-    check((await r1.plate.locator('[data-tab="tr"]:not([data-st])').count()) === 1 && (await r1.plate.locator('textarea[data-k="title"]').inputValue()).includes('Kupa'), 'retry fills the Turkish tab');
+    check((await r1.plate.locator('[data-tab="tr"]:not([data-st])').count()) === 1 && (await r1.plate.locator('textarea[data-k="title"]').inputValue()).includes('Çanta'), 'retry fills the Turkish tab');
 
     // Stop while writing: nothing is left running and the product goes back to idle.
-    const r2 = await uploadAndGenerate(page2, photo, 'mug mock:slow');
+    const r2 = await uploadAndGenerate(page2, photo, 'bag mock:slow');
     await r2.plate.locator('.wait .secs').waitFor();
     await page2.waitForTimeout(1300);
     const secs = await r2.plate.locator('.wait .secs').textContent();
@@ -212,7 +203,7 @@ async function screenshots(browser, photo) {
     // Friendly messages for the other errors (responses replaced in the browser).
     const scenario = async (label, handler, expected) => {
       await page2.route('**/api/generate.php', handler);
-      const r = await uploadAndGenerate(page2, photo, 'mug');
+      const r = await uploadAndGenerate(page2, photo, 'bag');
       await waitIdle(page2, r.id);
       const msg = (await r.plate.locator('.out > .err').textContent()) || '';
       check(expected.test(msg), `${label}: "${msg}"`);
@@ -229,7 +220,7 @@ async function screenshots(browser, photo) {
     check((await page2.textContent('#aiTxt')) === 'Demo paused', 'status dot switches to "Demo paused"');
     // The "try again after" time stays put when the page re-renders later.
     await page2.route('**/api/generate.php', json(429, { error: 'rate_limited', retry_after: 1800 }));
-    const r5 = await uploadAndGenerate(page2, photo, 'mug');
+    const r5 = await uploadAndGenerate(page2, photo, 'bag');
     await waitIdle(page2, r5.id);
     const firstMsg = await r5.plate.locator('.out > .err').textContent();
     await page2.evaluate(() => { const real = Date.now.bind(Date); Date.now = () => real() + 20 * 60 * 1000; });
@@ -254,7 +245,7 @@ async function screenshots(browser, photo) {
     await p6.waitFor();
     const id6 = await p6.getAttribute('id');
     const r6 = { plate: page3.locator('#' + id6), id: id6 };
-    await r6.plate.locator('textarea.notes').fill('mug mock:slow');
+    await r6.plate.locator('textarea.notes').fill('bag mock:slow');
     await r6.plate.locator('[data-gen]').dblclick();
     await page3.waitForTimeout(300);
     check((await r6.plate.locator('[data-stop]').count()) === 1, 'a double-click on "Write listing" keeps the run going');
@@ -263,7 +254,7 @@ async function screenshots(browser, photo) {
     // Stop after one language arrived keeps the earlier listing (and edits) for the others.
     await r6.plate.locator('[data-tab="en"]').click();
     await r6.plate.locator('textarea[data-k="title"]').fill('My edited English title');
-    await r6.plate.locator('textarea.notes').fill('mug mock:slow-but-ar');
+    await r6.plate.locator('textarea.notes').fill('bag mock:slow-but-ar');
     const rewriteAt = Date.now();
     await r6.plate.locator('[data-gen]').click();
     await r6.plate.locator('[data-tab="ar"]:not([data-st])').waitFor();
@@ -286,7 +277,7 @@ async function screenshots(browser, photo) {
       await page3.setInputFiles('#file', photo);
       const pl = page3.locator('.plate:not(#ex)').nth(n);
       await pl.waitFor();
-      await pl.locator('textarea.notes').fill('mug mock:slow');
+      await pl.locator('textarea.notes').fill('bag mock:slow');
       g.push(page3.locator('#' + (await pl.getAttribute('id'))));
     }
     await page3.click('#genAll');
@@ -316,7 +307,7 @@ async function screenshots(browser, photo) {
     const drop = await mp.locator('#drop').boundingBox();
     // The invisible file input fills everything inside the 2 px dashed border.
     check(box && drop && box.width >= drop.width - 5 && box.height >= drop.height - 5, 'the whole upload area opens the photo picker');
-    const r3 = await uploadAndGenerate(mp, photo, 'كوب قهوة أخضر');
+    const r3 = await uploadAndGenerate(mp, photo, 'حقيبة سفر جلد بني');
     await waitIdle(mp, r3.id);
     check((await r3.plate.locator('[data-tab]').count()) === 3, 'phone: listing written in three languages');
     check(await mp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'still no sideways scrolling with a listing');

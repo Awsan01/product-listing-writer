@@ -135,42 +135,42 @@ if (str_contains($prompt, 'mock:refusal')) {
         'usage' => ['input_tokens' => $usage['input_tokens'], 'output_tokens' => 0]]);
 }
 
-// Canned listing for a ceramic mug. A few values are messy on purpose (spaces, a hashtag without #,
-// a sixth feature, a literal "\n") so the tests can see the server sanitize them.
+// Canned listing for the brown leather travel bag in tests/fixtures/leather-bag.jpg. A few values are messy
+// on purpose (spaces, a hashtag without #, a sixth feature, a literal "\n") so the tests can see the server sanitize them.
 $seen = [
-    'ar' => ['product' => 'كوب قهوة من السيراميك', 'items' => ['كوب سيراميك أخضر', 'مقبض دائري', 'لمسة لامعة', 'صحن خشبي']],
-    'en' => ['product' => 'Ceramic coffee mug', 'items' => ['Green ceramic mug', 'Round handle', 'Glossy glaze', 'Wooden saucer']],
+    'ar' => ['product' => 'حقيبة سفر جلدية بنية', 'items' => ['حقيبة جلد بني', 'مقبضان علويان', 'حزام كتف طويل', 'جيبان أماميان', 'أبازيم معدنية']],
+    'en' => ['product' => 'Brown leather travel bag', 'items' => ['Brown leather bag', 'Two top handles', 'Long shoulder strap', 'Two front pockets', 'Metal buckles']],
 ];
 $listings = [
     'ar' => [
-        'title' => '  كوب قهوة سيراميك أخضر بلمسة لامعة ومقبض مريح  ',
-        'short' => 'كوب سيراميك أنيق بلون أخضر هادئ يضيف دفئاً إلى قهوتك اليومية.',
-        'description' => "استمتع بقهوتك الصباحية في كوب سيراميك بلون أخضر هادئ ولمسة نهائية لامعة تعكس الضوء بنعومة.\\n\\nيأتي الكوب بمقبض دائري مريح يسهل الإمساك به، ويناسب القهوة والشاي والمشروبات الساخنة، كما يضيف لمسة جميلة إلى طاولة المطبخ أو المكتب.",
-        'features' => ['• سيراميك بلمسة لامعة', 'لون أخضر هادئ', 'مقبض دائري مريح', 'مناسب للقهوة والشاي', 'تصميم بسيط وأنيق', 'ميزة سادسة للاختبار'],
-        'keywords' => ['كوب قهوة', 'كوب سيراميك', 'كوب أخضر', 'أكواب قهوة', 'كوب شاي', 'هدية لمحبي القهوة', 'كوب قهوة سيراميك', 'أدوات القهوة', 'كوب قهوة'],
-        'meta' => 'كوب قهوة سيراميك أخضر بلمسة لامعة ومقبض مريح، مناسب للقهوة والشاي ويضيف لمسة أنيقة إلى يومك.',
-        'caption' => "قهوة الصباح أحلى في كوبك الأخضر ☕\nاطلبه الآن وأضف لمسة هدوء إلى يومك.",
-        'hashtags' => ['#كوب_قهوة', 'أكواب سيراميك', '#قهوة', '#ديكور_المطبخ', '#هدايا'],
+        'title' => '  حقيبة سفر جلدية بنية بحزام كتف وجيبين أماميين  ',
+        'short' => 'حقيبة جلدية بنية بمقبضين علويين وحزام كتف طويل وجيبين أماميين بأغطية.',
+        'description' => "احمل أغراضك بأناقة مع هذه الحقيبة الجلدية البنية بلونها الدافئ وطابعها الكلاسيكي، إذ تمنحها الخياطة الظاهرة والمسامير النحاسية والأبازيم المعدنية مظهراً متيناً وجذاباً.\\n\\nيسهّل المقبضان العلويان حملها باليد، ويترك حزام الكتف الطويل يديك حرتين أثناء التنقل، فيما يحفظ الجيبان الأماميان أغراضك الصغيرة في متناولك، لتكون خياراً مناسباً لرحلات نهاية الأسبوع والنادي والسفر.",
+        'features' => ['• جلد بني بخياطة ظاهرة', 'مقبضان علويان للحمل باليد', 'حزام كتف طويل بأبازيم معدنية', 'جيبان أماميان بأغطية', 'تفاصيل من المسامير النحاسية', 'ميزة سادسة للاختبار'],
+        'keywords' => ['حقيبة جلد', 'حقيبة سفر جلد', 'حقيبة جلد بني', 'شنطة سفر', 'حقيبة رياضية جلد', 'حقيبة نهاية الأسبوع', 'حقيبة بحزام كتف', 'حقيبة جلد كلاسيكية', 'حقيبة جلد'],
+        'meta' => 'حقيبة سفر جلدية بنية بمقبضين وحزام كتف وجيبين أماميين، بتصميم كلاسيكي يناسب رحلات نهاية الأسبوع والسفر.',
+        'caption' => "جاهز لرحلة نهاية الأسبوع؟ 🧳\nحقيبتك الجلدية البنية بانتظارك، اطلبها الآن.",
+        'hashtags' => ['#حقيبة_جلد', 'حقائب سفر', '#شنط_جلد', '#سفر', '#هدايا'],
     ],
     'en' => [
-        'title' => 'Green Ceramic Coffee Mug with Glossy Glaze',
-        'short' => '  A calm green ceramic mug that brings warmth to your daily coffee.',
-        'description' => "Enjoy your morning coffee in a ceramic mug finished in a calm green glaze that catches the light softly.\n\nIts round handle is comfortable to hold, and it suits coffee, tea and other hot drinks while adding a simple, stylish touch to your kitchen or desk.",
-        'features' => ['Glossy ceramic finish', 'Calm green colour', 'Comfortable round handle', 'Suits coffee and tea', 'Simple, stylish design', 'A sixth feature for testing'],
-        'keywords' => ['coffee mug', 'ceramic mug', 'green mug', 'ceramic coffee cup', 'tea mug', 'coffee lover gift', 'glossy mug', 'kitchen mug'],
-        'meta' => 'Green ceramic coffee mug with a glossy glaze and a comfortable handle, made for coffee, tea and calm mornings.',
-        'caption' => "Morning coffee tastes better in green ☕\nOrder yours today.",
-        'hashtags' => ['#coffeemug', 'ceramic mug', '#greenmug', '#coffeetime', '#kitchendecor'],
+        'title' => 'Brown Leather Duffel Bag with Front Pockets',
+        'short' => '  A brown leather duffel bag with two top handles, a long shoulder strap and two front pockets.',
+        'description' => "Carry your essentials in style with this brown leather duffel bag. The warm, lived-in leather, visible stitching, brass studs and metal buckles give it a classic, rugged look.\n\nTwo rolled top handles make it easy to carry by hand, and the long shoulder strap keeps your hands free on the move. Two front pockets with snap flaps keep small things within reach, which makes it a natural pick for weekend trips, the gym or travel.",
+        'features' => ['Brown leather with visible stitching', 'Two rolled top handles', 'Long shoulder strap with metal buckles', 'Two front pockets with snap flaps', 'Brass stud and buckle details', 'A sixth feature for testing'],
+        'keywords' => ['leather duffel bag', 'brown leather bag', 'leather travel bag', 'weekender bag', 'leather gym bag', 'duffel bag with shoulder strap', 'vintage leather bag', 'leather holdall'],
+        'meta' => 'Brown leather duffel bag with two top handles, a long shoulder strap and two front pockets. A classic bag for weekend trips and travel.',
+        'caption' => "Packed and ready for the weekend 🧳\nBrown leather, two handles, one strap. Order yours today.",
+        'hashtags' => ['#leatherbag', 'duffel bag', '#weekenderbag', '#travelbag', '#leathergoods'],
     ],
     'tr' => [
-        'title' => 'Parlak Sırlı Yeşil Seramik Kahve Kupası',
-        'short' => 'Günlük kahvenize sıcaklık katan, sakin yeşil tonlu şık bir seramik kupa.',
-        'description' => "Sabah kahvenizi, ışığı yumuşakça yansıtan parlak yeşil sırlı bu seramik kupada keyifle için.\n\nYuvarlak kulpu rahat bir tutuş sunar; kahve, çay ve diğer sıcak içecekler için idealdir ve mutfağınıza ya da masanıza sade bir şıklık katar.",
-        'features' => ['Parlak seramik yüzey', 'Sakin yeşil renk', 'Rahat yuvarlak kulp', 'Kahve ve çay için uygun', 'Sade ve şık tasarım', 'Test için altıncı özellik'],
-        'keywords' => ['kahve kupası', 'seramik kupa', 'yeşil kupa', 'seramik kahve fincanı', 'çay kupası', 'kahve sever hediyesi', 'parlak kupa', 'mutfak kupası'],
-        'meta' => 'Parlak sırlı ve rahat kulplu yeşil seramik kahve kupası; kahve, çay ve huzurlu sabahlar için.',
-        'caption' => "Sabah kahvesi yeşil kupada daha güzel ☕\nHemen sipariş verin.",
-        'hashtags' => ['#kahvekupası', 'seramik kupa', '#yeşilkupa', '#kahvemolası', '#mutfakdekor'],
+        'title' => 'Ön Cepli Kahverengi Deri Seyahat Çantası',
+        'short' => 'İki üst sapı, uzun omuz askısı ve kapaklı iki ön cebi olan kahverengi deri seyahat çantası.',
+        'description' => "Bu kahverengi deri seyahat çantasıyla eşyalarınızı şıklıkla taşıyın. Sıcak tonlu deri, görünür dikişler, pirinç perçinler ve metal tokalar çantaya klasik ve sağlam bir görünüm kazandırıyor.\n\nİki üst sap elde taşımayı kolaylaştırır, uzun omuz askısı ise yolda ellerinizi serbest bırakır. Kapaklı iki ön cep küçük eşyaları el altında tutar; hafta sonu kaçamakları, spor salonu ve seyahatler için doğal bir seçim.",
+        'features' => ['Görünür dikişli kahverengi deri', 'İki üst taşıma sapı', 'Metal tokalı uzun omuz askısı', 'Kapaklı iki ön cep', 'Pirinç perçin ve toka detayları', 'Test için altıncı özellik'],
+        'keywords' => ['deri seyahat çantası', 'kahverengi deri çanta', 'deri spor çantası', 'hafta sonu çantası', 'omuz askılı çanta', 'vintage deri çanta', 'deri valiz çantası', 'deri el çantası'],
+        'meta' => 'İki saplı, omuz askılı ve iki ön cepli kahverengi deri seyahat çantası; hafta sonu kaçamakları ve seyahatler için klasik bir tasarım.',
+        'caption' => "Hafta sonuna hazır mısınız? 🧳\nKahverengi deri çantanız sizi bekliyor, hemen sipariş verin.",
+        'hashtags' => ['#deriçanta', 'seyahat çantası', '#haftasonu', '#seyahat', '#deri'],
     ],
 ];
 $listing = [];

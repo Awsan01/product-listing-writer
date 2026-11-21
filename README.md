@@ -15,7 +15,7 @@ and English, on desktop and on phones.
   <img src="docs/screenshots/phone.png" alt="The same listing on a phone" width="31%">
 </p>
 
-<sub>The screenshots are taken by <code>tests/browser-test.js</code> against the mock API, so the listing text is sample text.</sub>
+<sub>The screenshots are taken by <code>tests/browser-test.js</code> against the mock API, so the listing text is sample text. Product photo by Harsh Jadav on <a href="https://stocksnap.io/photo/handbag-leather-Z9ESJO45V5">StockSnap</a> (CC0).</sub>
 
 ## How it works
 
