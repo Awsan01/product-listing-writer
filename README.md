@@ -19,14 +19,6 @@ and English, on desktop and on phones.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["Browser<br/>index.html"] -->|"POST photo + settings<br/>one request per language"| B["api/generate.php"]
-    B -->|"Messages API: photo, prompt<br/>and a JSON schema"| C["Claude vision"]
-    C -->|"listing JSON"| B
-    B -->|"sanitized {seen, listing}"| A
-```
-
 1. The page shrinks each photo to at most 1568 px on the long side and converts it to JPEG in the browser.
 2. For each product it sends one request per selected language to `api/generate.php`, in parallel, with at most
    3 requests at a time on the page. Each language tab fills in as its result arrives; a language that fails shows
